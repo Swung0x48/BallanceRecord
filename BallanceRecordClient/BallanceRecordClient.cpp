@@ -1,6 +1,7 @@
 #include "BallanceRecordClient.h"
 #include <vector>
 #include <sstream>
+#include <cpr/cpr.h>
 
 IMod* BMLEntry(IBML* bml) {
 	return new BallanceRecordClient(bml);
@@ -32,8 +33,17 @@ void BallanceRecordClient::OnPreEndLevel()
 	m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
 	istr << "Lifes: " << lifes;
 	m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
-	istr << "Level bouns: " << levelBouns << std::endl;
+	istr << "Level bouns: " << levelBouns;
 	m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
 	istr << "Score: " << points + lifes * lifebouns + levelBouns;
-	m_bml->SendIngameMessage(istr.str().c_str());
+	m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
+
+	/* -- NOT WORKING -- */
+	/*cpr::Response r = cpr::Get(cpr::Url{ "https://www.example.com" });
+	istr << r.status_code; // 200
+	m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
+	istr << r.header["content-type"];       // text/html; charset=utf-8
+	m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
+	istr << r.text; // <html>...
+	m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");*/
 }
