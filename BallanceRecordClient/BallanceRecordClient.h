@@ -17,7 +17,7 @@ public:
 	virtual CKSTRING GetVersion() override { return BRC_VERSION; }
 	virtual CKSTRING GetName() override { return "Ballance Record Client"; }
 	virtual CKSTRING GetAuthor() override { return "Swung0x48"; }
-	virtual CKSTRING GetDescription() override { return "A mod to upload record to Hall of Fame."; }
+	virtual CKSTRING GetDescription() override { return "A mod to upload records to Hall of Fame."; }
 	DECLARE_BML_VERSION;
 
 	virtual void OnPreEndLevel() override;
