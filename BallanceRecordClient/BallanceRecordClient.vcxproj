@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BallanceRecordClient.h" />
-    <ClInclude Include="include\httplib.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BallanceRecordClient.cpp" />
