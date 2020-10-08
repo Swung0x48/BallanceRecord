@@ -12,6 +12,7 @@ using BallanceRecordApi.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using BallanceRecordApi.Options;
 
 namespace BallanceRecordApi
 {
@@ -34,6 +35,8 @@ namespace BallanceRecordApi
                 .AddEntityFrameworkStores<DataContext>();
             services.AddControllersWithViews();
             services.AddRazorPages();
+
+            services.AddSwaggerGen(x => x.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "Ballance Record API", Version = "v1" }));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -47,6 +50,12 @@ namespace BallanceRecordApi
             {
                 app.UseHsts();
             }
+
+            var swaggerOptions = new SwaggerOptions();
+            Configuration.GetSection(nameof(SwaggerOptions)).Bind(swaggerOptions);
+            app.UseSwagger(option => option.RouteTemplate = swaggerOptions.JsonRoute);
+            app.UseSwaggerUI(option => option.SwaggerEndpoint(swaggerOptions.UiEndpoint, swaggerOptions.Description));
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
