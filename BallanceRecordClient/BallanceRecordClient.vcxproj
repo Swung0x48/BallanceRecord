@@ -80,7 +80,7 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.bmod</TargetExt>
     <OutDir>..\..\..\..\Desktop\Ballance\ModLoader\Mods</OutDir>
-    <IncludePath>C:\Users\swung0x48\source\repos\BallanceRecordClient\BallanceRecordClient\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -105,7 +105,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>Ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;C:\Users\swung0x48\source\repos\BallanceRecordClient\BallanceRecordClient\lib\Debug\BML.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)lib\Debug\BML.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
