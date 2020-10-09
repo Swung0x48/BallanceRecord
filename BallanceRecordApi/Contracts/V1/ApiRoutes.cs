@@ -9,6 +9,7 @@ namespace BallanceRecordApi.Contracts.V1
         {
             public const string GetAll = Prefix + "/records";
             public const string Get = Prefix + "/records/{recordId}";
+            public const string Update = Prefix + "/records/{recordId}";
             public const string Create = Prefix + "/records";
         }
     }

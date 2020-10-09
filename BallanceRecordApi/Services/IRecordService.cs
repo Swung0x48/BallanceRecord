@@ -8,5 +8,6 @@ namespace BallanceRecordApi.Services
     {
         List<Record> GetRecords();
         Record GetRecordById(Guid recordId);
+        bool UpdateRecord(Record recordToUpdate);
     }
 }

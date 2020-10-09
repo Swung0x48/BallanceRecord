@@ -36,6 +36,17 @@ namespace BallanceRecordApi.Controllers.V1
             
             return Ok(record);
         }
+        
+        [HttpPut(ApiRoutes.Records.Update)]
+        public IActionResult Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
+        {
+            var record = _recordService.GetRecordById(recordId);
+            
+            if (record is null)
+                return NotFound();
+            
+            return Ok(record);
+        }
 
         [HttpPost(ApiRoutes.Records.Create)]
         public IActionResult Create([FromBody] CreateRecordRequest recordRequest)

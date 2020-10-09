@@ -31,5 +31,15 @@ namespace BallanceRecordApi.Services
         {
             return _records.SingleOrDefault(x => x.Id == recordId);
         }
+        public bool UpdateRecord(Record recordToUpdate)
+        {
+            var exists = !(GetRecordById(recordToUpdate.Id) is null);
+            if (!exists)
+                return false;
+
+            var index = _records.FindIndex(x => x.Id == recordToUpdate.Id);
+            _records[index] = recordToUpdate;
+            return true;
+        }
     }
 }
