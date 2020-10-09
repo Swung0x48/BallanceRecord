@@ -5,9 +5,11 @@ namespace BallanceRecordApi.Contracts.V1
         public const string Version = "v1";
         public const string Root = "api";
         public const string Prefix = Root + "/" + Version;
-        public static class Posts
+        public static class Records
         {
-            public const string GetAll = Prefix + "/posts";
+            public const string GetAll = Prefix + "/records";
+            public const string Get = Prefix + "/records/{recordId}";
+            public const string Create = Prefix + "/records";
         }
     }
 }

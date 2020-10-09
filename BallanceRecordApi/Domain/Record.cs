@@ -5,8 +5,9 @@ using System.Threading.Tasks;
 
 namespace BallanceRecordApi.Domain
 {
-    public class Post
+    public class Record
     {
         public string Id { get; set; }
+        public string Name { get; set; }
     }
 }
