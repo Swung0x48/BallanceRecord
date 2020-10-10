@@ -27,7 +27,7 @@ namespace BallanceRecordApi.Controllers.V1
         [HttpGet(ApiRoutes.Records.Get)]
         public async Task<IActionResult> Get([FromRoute] Guid recordId)
         {
-            var record = _recordService.GetRecordByIdAsync(recordId);
+            var record = await _recordService.GetRecordByIdAsync(recordId);
             
             if (record is null)
                 return NotFound();
