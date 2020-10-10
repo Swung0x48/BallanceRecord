@@ -16,7 +16,8 @@ namespace BallanceRecordApi.Installers
                     configuration.GetConnectionString("DefaultConnection")));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<DataContext>();
-            services.AddSingleton<IRecordService, RecordService>();
+            
+            services.AddScoped<IRecordService, RecordService>();
         }
     }
 }

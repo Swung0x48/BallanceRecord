@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using BallanceRecordApi.Domain;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,5 +13,7 @@ namespace BallanceRecordApi.Data
             : base(options)
         {
         }
+
+        public DbSet<Record> Records { get; set; }
     }
 }

@@ -1,45 +1,53 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using BallanceRecordApi.Data;
 using BallanceRecordApi.Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace BallanceRecordApi.Services
 {
     public class RecordService: IRecordService
     {
         private List<Record> _records;
+        private readonly DataContext _dataContext;
         
-        public RecordService()
+        public RecordService(DataContext dataContext)
         {
-            _records = new List<Record>();
-            for (var i = 0; i < 5; i++) // TODO: Remove these before deployment.
-            {
-                _records.Add(new Record
-                {
-                    Id = Guid.NewGuid(),
-                    Name = $"Record Name {i}"
-                });
-            }
+            _dataContext = dataContext;
         }
 
-        public List<Record> GetRecords()
+        public async Task<List<Record>> GetRecordsAsync()
         {
-            return _records;
+            return await _dataContext.Records.ToListAsync();
         }
 
-        public Record GetRecordById(Guid recordId)
+        public async Task<Record> GetRecordByIdAsync(Guid recordId)
         {
-            return _records.SingleOrDefault(x => x.Id == recordId);
+            return await _dataContext.Records.SingleOrDefaultAsync(x => x.Id == recordId);
         }
-        public bool UpdateRecord(Record recordToUpdate)
-        {
-            var exists = !(GetRecordById(recordToUpdate.Id) is null);
-            if (!exists)
-                return false;
 
-            var index = _records.FindIndex(x => x.Id == recordToUpdate.Id);
-            _records[index] = recordToUpdate;
-            return true;
+        public async Task<bool> CreateRecordAsync(Record record)
+        {
+            await _dataContext.Records.AddAsync(record);
+            var hasCreated = await _dataContext.SaveChangesAsync();
+            return hasCreated > 0;
+        }
+        public async Task<bool> UpdateRecordAsync(Record recordToUpdate)
+        {
+            _dataContext.Records.Update(recordToUpdate);
+            var hasUpdated = await _dataContext.SaveChangesAsync();
+            return hasUpdated > 0;
+        }
+
+        public async Task<bool> DeleteRecordAsync(Guid postId)
+        {
+            var post = await GetRecordByIdAsync(postId);
+            _dataContext.Records.Remove(post);
+
+            var hasDeleted = await _dataContext.SaveChangesAsync();
+            return hasDeleted > 0;
         }
     }
 }

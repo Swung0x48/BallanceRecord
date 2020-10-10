@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
@@ -12,7 +11,6 @@ namespace BallanceRecordApi.Controllers.V1
 {
     public class RecordsController: Controller
     {
-
         private readonly IRecordService _recordService;
 
         public RecordsController(IRecordService recordService)
@@ -21,15 +19,15 @@ namespace BallanceRecordApi.Controllers.V1
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            return Ok(_recordService.GetRecords());
+            return Ok(await _recordService.GetRecordsAsync());
         }
         
         [HttpGet(ApiRoutes.Records.Get)]
-        public IActionResult Get([FromRoute] Guid recordId)
+        public async Task<IActionResult> Get([FromRoute] Guid recordId)
         {
-            var record = _recordService.GetRecordById(recordId);
+            var record = _recordService.GetRecordByIdAsync(recordId);
             
             if (record is null)
                 return NotFound();
@@ -38,30 +36,46 @@ namespace BallanceRecordApi.Controllers.V1
         }
         
         [HttpPut(ApiRoutes.Records.Update)]
-        public IActionResult Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
-        {
-            var record = _recordService.GetRecordById(recordId);
-            
-            if (record is null)
-                return NotFound();
-            
-            return Ok(record);
-        }
-
-        [HttpPost(ApiRoutes.Records.Create)]
-        public IActionResult Create([FromBody] CreateRecordRequest recordRequest)
+        public async Task<IActionResult> Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
         {
             var record = new Record
             {
-                Id = Guid.NewGuid(),
+                Id = recordId,
+                Name = request.Name
+            };
+
+            var updated = await _recordService.UpdateRecordAsync(record);
+            
+            if (updated)
+                return Ok(record);
+
+            return NotFound();
+        }
+
+        [HttpDelete(ApiRoutes.Records.Delete)]
+        public async Task<IActionResult> Delete([FromRoute] Guid recordId)
+        {
+            var deleted = await _recordService.DeleteRecordAsync(recordId);
+
+            if (deleted)
+                return NoContent();
+
+            return NotFound();
+        }
+
+        [HttpPost(ApiRoutes.Records.Create)]
+        public async Task<IActionResult> Create([FromBody] CreateRecordRequest recordRequest)
+        {
+            var record = new Record
+            {
                 Name = recordRequest.Name
             };
             
             if (record.Id == Guid.Empty)
                 record.Id = Guid.NewGuid();
-            
-            _recordService.GetRecords().Add(record);
 
+            await _recordService.CreateRecordAsync(record);
+            
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = $"{baseUrl}/{ApiRoutes.Records.Get.Replace("{recordId}", record.Id.ToString() )}";
             
