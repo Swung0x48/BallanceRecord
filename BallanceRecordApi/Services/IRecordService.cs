@@ -10,7 +10,7 @@ namespace BallanceRecordApi.Services
         Task<List<Record>> GetRecordsAsync();
         Task<Record> GetRecordByIdAsync(Guid recordId);
         Task<bool> UpdateRecordAsync(Record recordToUpdate);
-        Task<bool> DeleteRecordAsync(Guid postId);
+        Task<bool> DeleteRecordAsync(Guid recordId);
         Task<bool> CreateRecordAsync(Record record);
     }
 }

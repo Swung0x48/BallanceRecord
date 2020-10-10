@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using BallanceRecordApi.Data;
 using BallanceRecordApi.Domain;
@@ -41,11 +40,14 @@ namespace BallanceRecordApi.Services
             return hasUpdated > 0;
         }
 
-        public async Task<bool> DeleteRecordAsync(Guid postId)
+        public async Task<bool> DeleteRecordAsync(Guid recordId)
         {
-            var post = await GetRecordByIdAsync(postId);
-            _dataContext.Records.Remove(post);
+            var record = await GetRecordByIdAsync(recordId);
 
+            if (record is null)
+                return false;
+            
+            _dataContext.Records.Remove(record);
             var hasDeleted = await _dataContext.SaveChangesAsync();
             return hasDeleted > 0;
         }
