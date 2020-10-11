@@ -13,5 +13,12 @@ namespace BallanceRecordApi.Contracts.V1
             public const string Delete = Prefix + "/records/{recordId}";
             public const string Create = Prefix + "/records";
         }
+
+        public static class Identity
+        {
+            public const string Login = Prefix + "/identity/login";
+
+            public const string Register = Prefix + "/identity/register";
+        }
     }
 }

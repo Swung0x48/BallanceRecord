@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BallanceRecordApi.Data;
 using BallanceRecordApi.Domain;
@@ -9,7 +10,6 @@ namespace BallanceRecordApi.Services
 {
     public class RecordService: IRecordService
     {
-        private List<Record> _records;
         private readonly DataContext _dataContext;
         
         public RecordService(DataContext dataContext)
@@ -36,8 +36,17 @@ namespace BallanceRecordApi.Services
         public async Task<bool> UpdateRecordAsync(Record recordToUpdate)
         {
             _dataContext.Records.Update(recordToUpdate);
-            var hasUpdated = await _dataContext.SaveChangesAsync();
-            return hasUpdated > 0;
+            try
+            {
+                var hasUpdated = await _dataContext.SaveChangesAsync();
+                return hasUpdated > 0;
+            }
+            catch (DbUpdateConcurrencyException e)
+            {
+                await e.Entries.Single().ReloadAsync();
+                var hasUpdated = await _dataContext.SaveChangesAsync();
+                return hasUpdated > 0;
+            }
         }
 
         public async Task<bool> DeleteRecordAsync(Guid recordId)

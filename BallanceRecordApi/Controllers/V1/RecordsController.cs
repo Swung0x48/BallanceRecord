@@ -5,10 +5,13 @@ using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
 using BallanceRecordApi.Domain;
 using BallanceRecordApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BallanceRecordApi.Controllers.V1
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class RecordsController: Controller
     {
         private readonly IRecordService _recordService;
@@ -45,7 +48,7 @@ namespace BallanceRecordApi.Controllers.V1
             };
 
             var updated = await _recordService.UpdateRecordAsync(record);
-            
+
             if (updated)
                 return Ok(record);
 
