@@ -1,9 +1,11 @@
+using System.Linq;
 using System.Security.Principal;
 using System.Threading.Tasks;
 using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
 using BallanceRecordApi.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BallanceRecordApi.Controllers.V1
@@ -19,7 +21,33 @@ namespace BallanceRecordApi.Controllers.V1
         [HttpPost(ApiRoutes.Identity.Register)]
         public async Task<IActionResult> Register([FromBody] UserRegistrationRequest request)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+            
             var authResponse = await _identityService.RegisterAsync(request.Email, request.Password);
+            if (!authResponse.Success)
+            {
+                return BadRequest(new AuthFailResponse
+                {
+                    Errors = authResponse.Errors
+                });
+            }
+            
+            return Ok(new AuthSuccessResponse
+            {
+                Token = authResponse.Token
+            });
+        }
+        
+        [HttpPost(ApiRoutes.Identity.Login)]
+        public async Task<IActionResult> Login([FromBody] UserLoginRequest request)
+        {
+            var authResponse = await _identityService.LoginAsync(request.Email, request.Password);
             if (!authResponse.Success)
             {
                 return BadRequest(new AuthFailResponse
