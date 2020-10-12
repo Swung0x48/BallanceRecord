@@ -33,6 +33,24 @@ namespace BallanceRecordApi.Services
             var hasCreated = await _dataContext.SaveChangesAsync();
             return hasCreated > 0;
         }
+
+        public async Task<bool> UserOwnsPostAsync(Guid recordId, string userId)
+        {
+            var post = await _dataContext.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == recordId);
+
+            if (post is null)
+            {
+                return false;
+            }
+
+            if (post.UserId != userId)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public async Task<bool> UpdateRecordAsync(Record recordToUpdate)
         {
             _dataContext.Records.Update(recordToUpdate);

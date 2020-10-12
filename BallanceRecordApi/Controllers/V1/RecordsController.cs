@@ -4,6 +4,7 @@ using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
 using BallanceRecordApi.Domain;
+using BallanceRecordApi.Extensions;
 using BallanceRecordApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -41,11 +42,15 @@ namespace BallanceRecordApi.Controllers.V1
         [HttpPut(ApiRoutes.Records.Update)]
         public async Task<IActionResult> Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
         {
-            var record = new Record
+            var userOwnsPost = await _recordService.UserOwnsPostAsync(recordId, HttpContext.GetUserId());
+
+            if (!userOwnsPost)
             {
-                Id = recordId,
-                Name = request.Name
-            };
+                return BadRequest(new {error = "You do not own this record."});
+            }
+
+            var record = await _recordService.GetRecordByIdAsync(recordId);
+            record.Name = request.Name;
 
             var updated = await _recordService.UpdateRecordAsync(record);
 
@@ -58,6 +63,13 @@ namespace BallanceRecordApi.Controllers.V1
         [HttpDelete(ApiRoutes.Records.Delete)]
         public async Task<IActionResult> Delete([FromRoute] Guid recordId)
         {
+            var userOwnsPost = await _recordService.UserOwnsPostAsync(recordId, HttpContext.GetUserId());
+
+            if (!userOwnsPost)
+            {
+                return BadRequest(new {error = "You do not own this record."});
+            }
+            
             var deleted = await _recordService.DeleteRecordAsync(recordId);
 
             if (deleted)
@@ -71,7 +83,8 @@ namespace BallanceRecordApi.Controllers.V1
         {
             var record = new Record
             {
-                Name = recordRequest.Name
+                Name = recordRequest.Name,
+                UserId = HttpContext.GetUserId()
             };
             
             if (record.Id == Guid.Empty)

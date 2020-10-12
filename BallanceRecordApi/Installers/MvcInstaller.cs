@@ -26,6 +26,17 @@ namespace BallanceRecordApi.Installers
 
             services.AddScoped<IIdentityService, IdentityService>();
 
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateIssuerSigningKey = false,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.Secret)),
+                ValidateAudience = false,
+                RequireExpirationTime = true,
+                ValidateLifetime = true
+            };
+            services.AddSingleton(tokenValidationParameters);
+            
             services.AddAuthentication(x =>
                 {
                     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -35,15 +46,7 @@ namespace BallanceRecordApi.Installers
                 .AddJwtBearer(x =>
                 {
                     x.SaveToken = true;
-                    x.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = false,
-                        ValidateIssuerSigningKey = false,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.Secret)),
-                        ValidateAudience = false,
-                        RequireExpirationTime = true,
-                        ValidateLifetime = true
-                    };
+                    x.TokenValidationParameters = tokenValidationParameters;
                 });
 
             #endregion

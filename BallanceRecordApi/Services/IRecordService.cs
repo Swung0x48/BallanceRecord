@@ -12,5 +12,6 @@ namespace BallanceRecordApi.Services
         Task<bool> UpdateRecordAsync(Record recordToUpdate);
         Task<bool> DeleteRecordAsync(Guid recordId);
         Task<bool> CreateRecordAsync(Record record);
+        Task<bool> UserOwnsPostAsync(Guid recordId, string userId);
     }
 }

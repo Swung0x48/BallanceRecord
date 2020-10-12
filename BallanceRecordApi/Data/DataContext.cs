@@ -15,5 +15,7 @@ namespace BallanceRecordApi.Data
         }
 
         public DbSet<Record> Records { get; set; }
+
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }
