@@ -15,18 +15,7 @@ services:
       - db-server
     networks:
       - localdev
-        
-#db-server:
-#  image: mysql
-#  restart: always
-#  command: --default-authentication-plugin=mysql_native_password
-#    environment:
-#      - MYSQL_ROOT_PASSWORD: temp233
-#    ports:
-#      - "3306:3306"
-#    network:
-#      - localdev
-
+     
   db-server:
     image: mysql
     restart: always
@@ -35,3 +24,10 @@ services:
       MYSQL_ROOT_PASSWORD: "temp233"
     ports:
       - "3306:3306"
+    networks:
+      - localdev
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data: {}

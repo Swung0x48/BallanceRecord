@@ -15,5 +15,7 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 WORKDIR /app
 
 COPY --from=build /build/out .
+COPY run.sh .
+COPY updateDB .
 
-ENTRYPOINT ["dotnet", "BallanceRecordApi.dll"]
+ENTRYPOINT ["sh", "run.sh"]
