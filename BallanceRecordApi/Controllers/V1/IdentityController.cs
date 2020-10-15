@@ -1,11 +1,9 @@
 using System.Linq;
-using System.Security.Principal;
 using System.Threading.Tasks;
 using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
 using BallanceRecordApi.Services;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BallanceRecordApi.Controllers.V1
