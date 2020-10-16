@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -5,6 +7,7 @@ using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
 using BallanceRecordApi.Data;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,8 +26,15 @@ namespace BallanceRecordApi.IntegrationTest
                 {
                     builder.ConfigureServices(services =>
                     {
-                        services.RemoveAll(typeof(DataContext));
-                        services.AddDbContext<DataContext>(options => { options.UseInMemoryDatabase("TestDb"); });
+                        var descriptor = services.SingleOrDefault(
+                            x => x.ServiceType ==
+                                 typeof(DbContextOptions<DataContext>));
+                        if (descriptor != null) { services.Remove(descriptor); }
+                        // services.RemoveAll(typeof(DataContext));
+                        services.AddDbContext<DataContext>(options =>
+                        {
+                            options.UseInMemoryDatabase("TestDb");
+                        });
                     });
                 });
             TestClient = appFactory.CreateClient();
@@ -32,7 +42,8 @@ namespace BallanceRecordApi.IntegrationTest
 
         protected async Task AuthenticateAsync()
         {
-            TestClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", await GetJwtAsync());
+            TestClient.DefaultRequestHeaders.Authorization = 
+                new AuthenticationHeaderValue("bearer", await GetJwtAsync());
         }
 
         private async Task<string> GetJwtAsync()
@@ -43,7 +54,10 @@ namespace BallanceRecordApi.IntegrationTest
                 Password = "Temp233"
             });
 
+            var succeed = response.IsSuccessStatusCode;
+            
             var registrationResponse = await response.Content.ReadAsAsync<AuthSuccessResponse>();
+
             return registrationResponse.Token;
         }
     }
