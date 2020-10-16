@@ -26,9 +26,9 @@ namespace BallanceRecordApi.IntegrationTest
                 {
                     builder.ConfigureServices(services =>
                     {
-                        var descriptor = services.SingleOrDefault(
-                            x => x.ServiceType ==
-                                 typeof(DbContextOptions<DataContext>));
+                        var descriptor = services.SingleOrDefault(x => 
+                            x.ServiceType == typeof(DbContextOptions<DataContext>)
+                        );
                         if (descriptor != null) { services.Remove(descriptor); }
                         // services.RemoveAll(typeof(DataContext));
                         services.AddDbContext<DataContext>(options =>
@@ -59,6 +59,12 @@ namespace BallanceRecordApi.IntegrationTest
             var registrationResponse = await response.Content.ReadAsAsync<AuthSuccessResponse>();
 
             return registrationResponse.Token;
+        }
+
+        protected async Task<RecordResponse> CreateRecordAsync(CreateRecordRequest request)
+        {
+            var response = await TestClient.PostAsJsonAsync(ApiRoutes.Records.Create, request);
+            return await response.Content.ReadAsAsync<RecordResponse>();
         }
     }
 }
