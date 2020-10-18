@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
@@ -15,16 +18,26 @@ namespace BallanceRecordApi.Controllers.V1
     public class RecordsController: Controller
     {
         private readonly IRecordService _recordService;
-
-        public RecordsController(IRecordService recordService)
+        private readonly IMapper _mapper;
+        
+        public RecordsController(IRecordService recordService, IMapper mapper)
         {
             _recordService = recordService;
+            _mapper = mapper;
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(await _recordService.GetRecordsAsync());
+            var records = await _recordService.GetRecordsAsync();
+            var recordResponses = _mapper.Map<List<RecordResponse>>(records);
+            // var recordResponses = records.Select(record => new RecordResponse
+            // {
+            //     Id = record.Id,
+            //     Name = record.Name,
+            //     UserId = record.UserId
+            // }).ToList();
+            return Ok(recordResponses);
         }
         
         [HttpGet(ApiRoutes.Records.Get)]
@@ -35,7 +48,7 @@ namespace BallanceRecordApi.Controllers.V1
             if (record is null)
                 return NotFound();
             
-            return Ok(record);
+            return Ok(_mapper.Map<RecordResponse>(record));
         }
         
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -55,7 +68,7 @@ namespace BallanceRecordApi.Controllers.V1
             var updated = await _recordService.UpdateRecordAsync(record);
 
             if (updated)
-                return Ok(record);
+                return Ok(_mapper.Map<RecordResponse>(record));
 
             return NotFound();
         }
@@ -115,12 +128,7 @@ namespace BallanceRecordApi.Controllers.V1
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = $"{baseUrl}/{ApiRoutes.Records.Get.Replace("{recordId}", record.Id.ToString() )}";
             
-            var response = new RecordResponse
-            {
-                Id = record.Id,
-                Name = record.Name
-            };
-            return Created(locationUri, response);
+            return Created(locationUri, _mapper.Map<RecordResponse>(record));
         }
     }
 }
