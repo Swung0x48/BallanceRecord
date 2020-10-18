@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using System.Text;
+using BallanceRecordApi.Filters;
 using BallanceRecordApi.Options;
 using BallanceRecordApi.Services;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +17,13 @@ namespace BallanceRecordApi.Installers
     {
         public void InstallServices(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddMvc(options => { options.EnableEndpointRouting = false; })
+            services
+                .AddMvc(options =>
+                {
+                    options.EnableEndpointRouting = false;
+                    options.Filters.Add<ValidationFilter>();
+                })
+                .AddFluentValidation(mvcConfiguration => mvcConfiguration.RegisterValidatorsFromAssemblyContaining<Startup>())
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             
             #region JWT & Authentication
