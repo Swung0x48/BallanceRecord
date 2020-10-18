@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BallanceRecordApi.Controllers.V1
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class RecordsController: Controller
     {
         private readonly IRecordService _recordService;
@@ -39,6 +38,7 @@ namespace BallanceRecordApi.Controllers.V1
             return Ok(record);
         }
         
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut(ApiRoutes.Records.Update)]
         public async Task<IActionResult> Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
         {
@@ -60,16 +60,18 @@ namespace BallanceRecordApi.Controllers.V1
             return NotFound();
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpDelete(ApiRoutes.Records.Delete)]
         public async Task<IActionResult> Delete([FromRoute] Guid recordId)
         {
             var userOwnsPost = await _recordService.UserOwnsPostAsync(recordId, HttpContext.GetUserId());
-
-            if (!userOwnsPost)
-            {
-                return BadRequest(new {error = "You do not own this record."});
-            }
+            var userIsAdmin = HttpContext.User.IsInRole("Admin");
             
+            if (!userOwnsPost && !userIsAdmin)
+            {
+                return BadRequest(new {error = "You do not own this record and you are not an admin."});
+            }
+
             var deleted = await _recordService.DeleteRecordAsync(recordId);
 
             if (deleted)
@@ -78,6 +80,24 @@ namespace BallanceRecordApi.Controllers.V1
             return NotFound();
         }
 
+        // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        // [HttpDelete(ApiRoutes.Records.DeleteAsAdmin)]
+        // public async Task<IActionResult> DeleteAsAdmin([FromRoute] Guid recordId)
+        // {
+        //     return await DeletePost(recordId);
+        // }
+
+        // private async Task<IActionResult> DeletePost(Guid recordId)
+        // {
+        //     var deleted = await _recordService.DeleteRecordAsync(recordId);
+        //
+        //     if (deleted)
+        //         return NoContent();
+        //
+        //     return NotFound();
+        // }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost(ApiRoutes.Records.Create)]
         public async Task<IActionResult> Create([FromBody] CreateRecordRequest recordRequest)
         {

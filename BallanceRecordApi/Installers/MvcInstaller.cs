@@ -51,6 +51,8 @@ namespace BallanceRecordApi.Installers
 
             #endregion
 
+            services.AddAuthorization();
+
             services.AddSwaggerGen(x =>
             {
                 x.SwaggerDoc(

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -16,16 +17,18 @@ namespace BallanceRecordApi.Services
     public class IdentityService: IIdentityService
     {
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly JwtOptions _jwtOptions;
         private readonly TokenValidationParameters _tokenValidationParameters;
-        private readonly DataContext _context;
+        private readonly DataContext _dataContext;
         
-        public IdentityService(UserManager<IdentityUser> userManager, JwtOptions jwtOptions, TokenValidationParameters tokenValidationParameters, DataContext context)
+        public IdentityService(UserManager<IdentityUser> userManager, JwtOptions jwtOptions, TokenValidationParameters tokenValidationParameters, DataContext dataContext, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _jwtOptions = jwtOptions;
             _tokenValidationParameters = tokenValidationParameters;
-            _context = context;
+            _dataContext = dataContext;
+            _roleManager = roleManager;
         }
         
         public async Task<AuthenticationResult> RegisterAsync(string email, string password)
@@ -39,13 +42,15 @@ namespace BallanceRecordApi.Services
                     Errors = new []{"User with this email address already exists."}
                 };
             }
-            
+
+            var newUserId = Guid.NewGuid();
             var newUser = new IdentityUser
             {
+                Id = newUserId.ToString(),
                 Email = email,
                 UserName = email
             };
-
+            
             var createdUser = await _userManager.CreateAsync(newUser, password);
 
             if (!createdUser.Succeeded)
@@ -55,7 +60,7 @@ namespace BallanceRecordApi.Services
                     Errors = createdUser.Errors.Select(x => x.Description)
                 };
             }
-            
+
             return await GenerateAuthenticationResultForUserAsync(newUser);
         }
         
@@ -106,7 +111,7 @@ namespace BallanceRecordApi.Services
 
             var jti = validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
 
-            var storedRefreshToken = await _context.RefreshTokens.SingleOrDefaultAsync(x => x.Token == refreshToken);
+            var storedRefreshToken = await _dataContext.RefreshTokens.SingleOrDefaultAsync(x => x.Token == refreshToken);
 
             if (storedRefreshToken is null)
             {
@@ -134,14 +139,32 @@ namespace BallanceRecordApi.Services
             }
 
             storedRefreshToken.Used = true;
-            _context.RefreshTokens.Update(storedRefreshToken);
-            await _context.SaveChangesAsync();
+            _dataContext.RefreshTokens.Update(storedRefreshToken);
+            await _dataContext.SaveChangesAsync();
 
             var user = await _userManager.FindByIdAsync(validatedToken.Claims
                 .Single(x => x.Type == "id").Value);
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
+        public async Task<bool> UserIsAdminAsync(string userId)
+        {
+            var adminRole = await _dataContext.Roles.AsNoTracking().SingleOrDefaultAsync(x => x.Name == "Admin");
+            var userRole = await _dataContext.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId);
+            
+            if (adminRole is null)
+            {
+                return false;
+            }
+
+            if (userRole.Id != adminRole.Id)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        
         private ClaimsPrincipal GetPrincipalFromToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -168,15 +191,38 @@ namespace BallanceRecordApi.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim("id", user.Id)
+            };
+
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            claims.AddRange(userClaims);
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            foreach (var userRole in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, userRole));
+                var role = await _roleManager.FindByNameAsync(userRole);
+                if(role == null) continue;
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+
+                foreach (var roleClaim in roleClaims)
+                {
+                    if(claims.Contains(roleClaim))
+                        continue;
+
+                    claims.Add(roleClaim);
+                }
+            }
+            
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                    new Claim("id", user.Id)
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.Add(_jwtOptions.TokenLifetime),
                 SigningCredentials =
                     new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -191,8 +237,8 @@ namespace BallanceRecordApi.Services
                 ExpiryTime = DateTime.Now.AddMonths(6)
             };
 
-            await _context.RefreshTokens.AddAsync(refreshToken);
-            await _context.SaveChangesAsync();
+            await _dataContext.RefreshTokens.AddAsync(refreshToken);
+            await _dataContext.SaveChangesAsync();
 
             return new AuthenticationResult
             {
