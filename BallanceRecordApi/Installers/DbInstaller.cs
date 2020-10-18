@@ -13,9 +13,9 @@ namespace BallanceRecordApi.Installers
         {
             services.AddDbContext<DataContext>(options =>
                 options.UseMySql(
-                    configuration.GetConnectionString("DefaultConnection"), 
-                    opt => opt.EnableRetryOnFailure()));
+                    configuration.GetConnectionString("DefaultConnection")));
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<DataContext>();
             
             var passwordOptions = new PasswordOptions();
