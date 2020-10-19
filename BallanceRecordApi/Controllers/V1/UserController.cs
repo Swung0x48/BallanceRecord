@@ -8,10 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BallanceRecordApi.Controllers.V1
 {
-    public class IdentityController: Controller
+    public class UserController: Controller
     {
         private readonly IIdentityService _identityService;
-        public IdentityController(IIdentityService identityService)
+        public UserController(IIdentityService identityService)
         {
             _identityService = identityService;
         }
@@ -62,7 +62,7 @@ namespace BallanceRecordApi.Controllers.V1
             });
         }
         
-        [HttpPost(ApiRoutes.Identity.Refresh)]
+        [HttpPut(ApiRoutes.Identity.Refresh)]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
             var authResponse = await _identityService.RefreshTokenAsync(request.Token, request.RefreshToken);
@@ -81,7 +81,7 @@ namespace BallanceRecordApi.Controllers.V1
             });
         }
         
-        [HttpPost(ApiRoutes.Identity.ConfirmEmail)]
+        [HttpPost(ApiRoutes.Identity.Email)]
         public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, string token)
         {
             var authResponse = await _identityService.ConfirmEmailAsync(userId, token);
