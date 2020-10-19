@@ -30,7 +30,7 @@ namespace BallanceRecordApi.Controllers.V1
             var authResponse = await _identityService.RegisterAsync(request.Email, request.Password);
             if (!authResponse.Success)
             {
-                return BadRequest(new AuthFailResponse
+                return Unauthorized(new AuthFailResponse
                 {
                     Errors = authResponse.Errors
                 });
@@ -66,6 +66,25 @@ namespace BallanceRecordApi.Controllers.V1
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
             var authResponse = await _identityService.RefreshTokenAsync(request.Token, request.RefreshToken);
+            if (!authResponse.Success)
+            {
+                return BadRequest(new AuthFailResponse
+                {
+                    Errors = authResponse.Errors
+                });
+            }
+            
+            return Ok(new AuthSuccessResponse
+            {
+                Token = authResponse.Token,
+                RefreshToken = authResponse.RefreshToken
+            });
+        }
+        
+        [HttpPost(ApiRoutes.Identity.ConfirmEmail)]
+        public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, string token)
+        {
+            var authResponse = await _identityService.ConfirmEmailAsync(userId, token);
             if (!authResponse.Success)
             {
                 return BadRequest(new AuthFailResponse

@@ -50,15 +50,14 @@ namespace BallanceRecordApi.Services
             {
                 Id = newUserId.ToString(),
                 Email = email,
-                UserName = email
+                UserName = email,
+                EmailConfirmed = false
             };
-            var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-            // TODO: Email sending logic
+            // var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
+            // TODO: Email sending logic to implement forgot password
             
             var createdUser = await _userManager.CreateAsync(newUser, password);
             
-
-
             if (!createdUser.Succeeded)
             {
                 return new AuthenticationResult
@@ -67,7 +66,23 @@ namespace BallanceRecordApi.Services
                 };
             }
 
-            return await GenerateAuthenticationResultForUserAsync(newUser);
+            try
+            {
+                var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
+                await SendConfirmationEmailAsync(newUser.Id, confirmationToken);
+                // TODO: Email sending logic.
+            }
+            catch (NotImplementedException e)
+            {
+                Console.WriteLine(e.StackTrace);
+            }
+            
+            return new AuthenticationResult
+            {
+                Errors = new []{"Confirmation email has been sent. Please check your inbox."}
+            };
+
+            // return await GenerateAuthenticationResultForUserAsync(newUser);
         }
         
         public async Task<AuthenticationResult> LoginAsync(string email, string password)
@@ -91,7 +106,15 @@ namespace BallanceRecordApi.Services
                     Errors = new []{"Username or password is not correct"}
                 };
             }
-
+            
+            if (!user.EmailConfirmed)
+            {
+                return new AuthenticationResult
+                {
+                    Errors = new []{"Email not confirmed."}
+                };
+            }
+            
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
@@ -150,26 +173,51 @@ namespace BallanceRecordApi.Services
             
             var user = await _userManager.FindByIdAsync(validatedToken.Claims
                 .Single(x => x.Type == "id").Value);
+            
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
-        public async Task<bool> UserIsAdminAsync(string userId)
+        public async Task<AuthenticationResult> ConfirmEmailAsync(string userId, string token)
         {
-            var adminRole = await _dataContext.Roles.AsNoTracking().SingleOrDefaultAsync(x => x.Name == "Admin");
-            var userRole = await _dataContext.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId);
-            
-            if (adminRole is null)
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user is null)
             {
-                return false;
+                return new AuthenticationResult
+                {
+                    Errors = new []{ "User not found." }
+                };
             }
 
-            if (userRole.Id != adminRole.Id)
+            var identityResult = await _userManager.ConfirmEmailAsync(user, token);
+            if (!identityResult.Succeeded)
             {
-                return false;
+                return new AuthenticationResult
+                {
+                    Errors = identityResult.Errors.Select(x => x.Description)
+                };
             }
 
-            return true;
+            return await GenerateAuthenticationResultForUserAsync(user);
         }
+
+        // public async Task<bool> UserIsAdminAsync(string userId)
+        // {
+        //     var adminRole = await _dataContext.Roles.AsNoTracking().SingleOrDefaultAsync(x => x.Name == "Admin");
+        //     var userRole = await _dataContext.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == userId);
+        //     
+        //     if (adminRole is null)
+        //     {
+        //         return false;
+        //     }
+        //
+        //     if (userRole.Id != adminRole.Id)
+        //     {
+        //         return false;
+        //     }
+        //
+        //     return true;
+        // }
         
         private ClaimsPrincipal GetPrincipalFromToken(string token)
         {
@@ -195,6 +243,14 @@ namespace BallanceRecordApi.Services
 
         private async Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(IdentityUser user)
         {
+            if (!user.EmailConfirmed)
+            {
+                return new AuthenticationResult
+                {
+                    Errors = new[] {"Email has not been confirmed yet."}
+                };
+            }
+            
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);
 
@@ -219,7 +275,7 @@ namespace BallanceRecordApi.Services
 
                 foreach (var roleClaim in roleClaims)
                 {
-                    if(claims.Contains(roleClaim))
+                    if (claims.Contains(roleClaim))
                         continue;
 
                     claims.Add(roleClaim);
@@ -252,6 +308,11 @@ namespace BallanceRecordApi.Services
                 Token = tokenHandler.WriteToken(token),
                 RefreshToken = refreshToken.Token
             };
+        }
+
+        private async Task<bool> SendConfirmationEmailAsync(string userId, string token)
+        {
+            throw new NotImplementedException();
         }
     }
 }
