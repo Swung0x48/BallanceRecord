@@ -26,7 +26,7 @@ namespace BallanceRecordApi.Installers
                 .AddFluentValidation(mvcConfiguration => mvcConfiguration.RegisterValidatorsFromAssemblyContaining<Startup>())
                 .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             
-            #region JWT & Authentication
+            #region JWT Authentication
 
             var jwtOptions = new JwtOptions();
             configuration.Bind(nameof(jwtOptions), jwtOptions);

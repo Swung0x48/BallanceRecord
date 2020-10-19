@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using BallanceRecordApi.Data;
 using BallanceRecordApi.Domain;
 using BallanceRecordApi.Options;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -50,8 +52,12 @@ namespace BallanceRecordApi.Services
                 Email = email,
                 UserName = email
             };
+            var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
+            // TODO: Email sending logic
             
             var createdUser = await _userManager.CreateAsync(newUser, password);
+            
+
 
             if (!createdUser.Succeeded)
             {
@@ -141,7 +147,7 @@ namespace BallanceRecordApi.Services
             storedRefreshToken.Used = true;
             _dataContext.RefreshTokens.Update(storedRefreshToken);
             await _dataContext.SaveChangesAsync();
-
+            
             var user = await _userManager.FindByIdAsync(validatedToken.Claims
                 .Single(x => x.Type == "id").Value);
             return await GenerateAuthenticationResultForUserAsync(user);
