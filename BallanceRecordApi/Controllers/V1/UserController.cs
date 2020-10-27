@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using BallanceRecordApi.Contracts.V1;
@@ -32,7 +33,7 @@ namespace BallanceRecordApi.Controllers.V1
             {
                 return Unauthorized(new AuthFailResponse
                 {
-                    Errors = authResponse.Errors
+                    Errors = authResponse.Messages
                 });
             }
             
@@ -51,7 +52,7 @@ namespace BallanceRecordApi.Controllers.V1
             {
                 return BadRequest(new AuthFailResponse
                 {
-                    Errors = authResponse.Errors
+                    Errors = authResponse.Messages
                 });
             }
             
@@ -70,7 +71,7 @@ namespace BallanceRecordApi.Controllers.V1
             {
                 return BadRequest(new AuthFailResponse
                 {
-                    Errors = authResponse.Errors
+                    Errors = authResponse.Messages
                 });
             }
             
@@ -89,7 +90,7 @@ namespace BallanceRecordApi.Controllers.V1
             {
                 return BadRequest(new AuthFailResponse
                 {
-                    Errors = authResponse.Errors
+                    Errors = authResponse.Messages
                 });
             }
             
@@ -98,6 +99,12 @@ namespace BallanceRecordApi.Controllers.V1
                 Token = authResponse.Token,
                 RefreshToken = authResponse.RefreshToken
             });
+        }
+
+        [HttpPut(ApiRoutes.Identity.Email)]
+        public async Task<IActionResult> ChangeEmail()
+        {
+            throw new NotImplementedException();
         }
     }
 }

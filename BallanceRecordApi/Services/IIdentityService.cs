@@ -8,6 +8,8 @@ namespace BallanceRecordApi.Services
         Task<AuthenticationResult> RegisterAsync(string email, string password);
         Task<AuthenticationResult> LoginAsync(string email, string password);
         Task<AuthenticationResult> RefreshTokenAsync(string token, string refreshToken);
-        Task<AuthenticationResult> ConfirmEmailAsync(string userId, string token);
+        Task<AuthenticationResult> ConfirmEmailAsync(string email, string token);
+        Task<AuthenticationResult> ChangePasswordAsync(string email, string currentPassword, string newPassword);
+        Task<AuthenticationResult> ChangeEmailAsync(string email, string newEmail);
     }
 }

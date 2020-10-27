@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using BallanceRecordApi.Data;
 using BallanceRecordApi.Domain;
 using BallanceRecordApi.Options;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -23,6 +21,13 @@ namespace BallanceRecordApi.Services
         private readonly JwtOptions _jwtOptions;
         private readonly TokenValidationParameters _tokenValidationParameters;
         private readonly DataContext _dataContext;
+
+        private enum EmailType
+        {
+            Register,
+            Reset,
+            EmailChange
+        }
         
         public IdentityService(UserManager<IdentityUser> userManager, JwtOptions jwtOptions, TokenValidationParameters tokenValidationParameters, DataContext dataContext, RoleManager<IdentityRole> roleManager)
         {
@@ -41,7 +46,7 @@ namespace BallanceRecordApi.Services
             {
                 return new AuthenticationResult
                 {
-                    Errors = new []{"User with this email address already exists."}
+                    Messages = new []{"User with this email address already exists."}
                 };
             }
 
@@ -53,47 +58,30 @@ namespace BallanceRecordApi.Services
                 UserName = email,
                 EmailConfirmed = false
             };
-            // var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-            // TODO: Email sending logic to implement forgot password
             
-            var createdUser = await _userManager.CreateAsync(newUser, password);
+            var userCreated = await _userManager.CreateAsync(newUser, password);
             
-            if (!createdUser.Succeeded)
+            if (!userCreated.Succeeded)
             {
                 return new AuthenticationResult
                 {
-                    Errors = createdUser.Errors.Select(x => x.Description)
+                    Messages = userCreated.Errors.Select(x => x.Description)
                 };
             }
 
-            try
-            {
-                var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(newUser);
-                await SendConfirmationEmailAsync(newUser.Id, confirmationToken);
-                // TODO: Email sending logic.
-            }
-            catch (NotImplementedException e)
-            {
-                Console.WriteLine(e.StackTrace);
-            }
-            
-            return new AuthenticationResult
-            {
-                Errors = new []{"Confirmation email has been sent. Please check your inbox."}
-            };
-
+            return await SendEmailAsync(newUser.Email, newUser.Id, EmailType.Register);
             // return await GenerateAuthenticationResultForUserAsync(newUser);
         }
         
         public async Task<AuthenticationResult> LoginAsync(string email, string password)
         {
             var user = await _userManager.FindByEmailAsync(email);
-
+            
             if (user is null)
             {
                 return new AuthenticationResult
                 {
-                    Errors = new []{"User does not exist."}
+                    Messages = new []{"User does not exist."}
                 };
             }
 
@@ -103,7 +91,7 @@ namespace BallanceRecordApi.Services
             {
                 return new AuthenticationResult
                 {
-                    Errors = new []{"Username or password is not correct"}
+                    Messages = new []{"Username or password is not correct"}
                 };
             }
             
@@ -111,7 +99,7 @@ namespace BallanceRecordApi.Services
             {
                 return new AuthenticationResult
                 {
-                    Errors = new []{"Email not confirmed."}
+                    Messages = new []{"Email not confirmed."}
                 };
             }
             
@@ -124,7 +112,7 @@ namespace BallanceRecordApi.Services
 
             if (validatedToken is null)
             {
-                return new AuthenticationResult {Errors = new []{"Invalid Token"}};
+                return new AuthenticationResult {Messages = new []{"Invalid Token"}};
             }
 
             var expiryDateUnix =
@@ -135,7 +123,7 @@ namespace BallanceRecordApi.Services
 
             if (expiryDateTimeUtc > DateTime.UtcNow)
             {
-                return new AuthenticationResult {Errors = new []{"This token hasn't expired yet."}};
+                return new AuthenticationResult {Messages = new []{"This token hasn't expired yet."}};
             }
 
             var jti = validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
@@ -144,27 +132,27 @@ namespace BallanceRecordApi.Services
 
             if (storedRefreshToken is null)
             {
-                return new AuthenticationResult{ Errors = new []{"This refresh token does not exist." }};
+                return new AuthenticationResult{ Messages = new []{"This refresh token does not exist." }};
             }
 
             if (DateTime.UtcNow > storedRefreshToken.ExpiryTime)
             {
-                return new AuthenticationResult { Errors = new []{"This refresh token has expired." }};
+                return new AuthenticationResult { Messages = new []{"This refresh token has expired." }};
             }
 
             if (storedRefreshToken.Invalidated)
             {
-                return new AuthenticationResult { Errors = new []{"This refresh token has been invalidated." }};
+                return new AuthenticationResult { Messages = new []{"This refresh token has been invalidated." }};
             }
 
             if (storedRefreshToken.Used)
             {
-                return new AuthenticationResult { Errors = new[] {"This refresh token has been used." }};
+                return new AuthenticationResult { Messages = new[] {"This refresh token has been used." }};
             }
 
             if (storedRefreshToken.JwtId != jti)
             {
-                return new AuthenticationResult { Errors = new[] {"This refresh token does not match this JWT."} };
+                return new AuthenticationResult { Messages = new[] {"This refresh token does not match this JWT."} };
             }
 
             storedRefreshToken.Used = true;
@@ -177,15 +165,15 @@ namespace BallanceRecordApi.Services
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
-        public async Task<AuthenticationResult> ConfirmEmailAsync(string userId, string token)
+        public async Task<AuthenticationResult> ConfirmEmailAsync(string email, string token)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            var user = await _userManager.FindByEmailAsync(email);
 
             if (user is null)
             {
                 return new AuthenticationResult
                 {
-                    Errors = new []{ "User not found." }
+                    Messages = new []{ "User not found." }
                 };
             }
 
@@ -194,11 +182,41 @@ namespace BallanceRecordApi.Services
             {
                 return new AuthenticationResult
                 {
-                    Errors = identityResult.Errors.Select(x => x.Description)
+                    Messages = identityResult.Errors.Select(x => x.Description)
                 };
             }
 
             return await GenerateAuthenticationResultForUserAsync(user);
+        }
+
+        public async Task<AuthenticationResult> ChangePasswordAsync(string email, string currentPassword, string newPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            var changeResult = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+            if (!changeResult.Succeeded)
+            {
+                return new AuthenticationResult
+                {
+                    Messages = changeResult.Errors.Select(x => x.Description)
+                };
+            }
+
+            return await GenerateAuthenticationResultForUserAsync(user);
+        }
+
+        public async Task<AuthenticationResult> ChangeEmailAsync(string email, string newEmail)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            return await SendEmailAsync(user.Email, user.Id, EmailType.EmailChange, newEmail);
+        }
+
+        public async Task<AuthenticationResult> ResetPasswordAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            return await SendEmailAsync(email, user.Id, EmailType.Reset);
         }
 
         // public async Task<bool> UserIsAdminAsync(string userId)
@@ -247,7 +265,7 @@ namespace BallanceRecordApi.Services
             {
                 return new AuthenticationResult
                 {
-                    Errors = new[] {"Email has not been confirmed yet."}
+                    Messages = new[] {"Email has not been confirmed yet."}
                 };
             }
             
@@ -310,9 +328,41 @@ namespace BallanceRecordApi.Services
             };
         }
 
-        private async Task<bool> SendConfirmationEmailAsync(string userId, string token)
+        private async Task<AuthenticationResult> SendEmailAsync(string email, string userId, EmailType type, string newEmail = null)
         {
-            throw new NotImplementedException();
+            // throw new NotImplementedException();
+            var succeed = false;
+            
+            var user = await _userManager.FindByIdAsync(userId);
+
+            var token = "";
+            switch (type)
+            {
+                case EmailType.Register:
+                    token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    break;
+                case EmailType.Reset:
+                    token = await _userManager.GeneratePasswordResetTokenAsync(user); 
+                    break;
+                case EmailType.EmailChange:
+                    token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            }
+
+            if (!succeed)
+            {
+                return new AuthenticationResult
+                {
+                    Messages = new []{"Email send failed."}
+                };
+            }
+            
+            return new AuthenticationResult
+            {
+                Messages = new []{"Confirmation email has been sent. Please check your inbox."}  // TODO: Refactor needed.
+            };
         }
     }
 }
