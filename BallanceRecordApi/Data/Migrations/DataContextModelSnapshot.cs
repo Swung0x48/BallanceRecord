@@ -26,6 +26,12 @@ namespace BallanceRecordApi.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("longtext CHARACTER SET utf8mb4");
 
+                    b.Property<int>("Score")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Time")
+                        .HasColumnType("double");
+
                     b.Property<string>("UserId")
                         .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
@@ -39,6 +45,7 @@ namespace BallanceRecordApi.Migrations
             modelBuilder.Entity("BallanceRecordApi.Domain.RefreshToken", b =>
                 {
                     b.Property<string>("Token")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
 
                     b.Property<DateTime>("CreationDate")
