@@ -79,9 +79,13 @@ namespace BallanceRecordApi.Services
             return new AuthenticationResult
             {
                 Success = true,
-                Messages = new []{"Please check your inbox in order to validate your email.", newUser.Id, await _userManager.GenerateEmailConfirmationTokenAsync(newUser)}
+                Messages = new []
+                {
+                    "Please check your inbox in order to validate your email.", 
+                    newUser.Id, 
+                    await _userManager.GenerateEmailConfirmationTokenAsync(newUser)
+                }
             };
-            // return await SendEmailAsync(newUser.Email, newUser.Id, EmailType.Register);
             // return await GenerateAuthenticationResultForUserAsync(newUser);
         }
         
