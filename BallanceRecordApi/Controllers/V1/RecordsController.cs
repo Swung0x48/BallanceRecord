@@ -116,7 +116,9 @@ namespace BallanceRecordApi.Controllers.V1
             var record = new Record
             {
                 Name = recordRequest.Name,
-                UserId = HttpContext.GetUserId()
+                UserId = HttpContext.GetUserId(),
+                Score = recordRequest.Score,
+                Time = recordRequest.Time
             };
             
             if (record.Id == Guid.Empty)
