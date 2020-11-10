@@ -16,11 +16,11 @@ namespace BallanceRecordApi.Services
             _emailOptions = emailOptions;
         }
         
-        public async Task SendAsync(string from, string to, string subject, string html)
+        public async Task SendAsync(string to, string subject, string html)
         {
             // create message
             var email = new MimeMessage();
-            email.From.Add(MailboxAddress.Parse(from));
+            email.From.Add(MailboxAddress.Parse(_emailOptions.EmailAddress));
             email.To.Add(MailboxAddress.Parse(to));
             email.Subject = subject;
             email.Body = new TextPart(TextFormat.Html) { Text = html };

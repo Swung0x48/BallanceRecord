@@ -23,7 +23,7 @@ namespace BallanceRecordApi.Services
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly JwtOptions _jwtOptions;
         // private readonly EmailService _emailService;
-        private readonly EmailOptions _emailOptions;
+        // private readonly EmailOptions _emailOptions;
         private readonly TokenValidationParameters _tokenValidationParameters;
         private readonly DataContext _dataContext;
 
@@ -34,15 +34,15 @@ namespace BallanceRecordApi.Services
             EmailChange
         }
         
-        public IdentityService(UserManager<IdentityUser> userManager, JwtOptions jwtOptions, TokenValidationParameters tokenValidationParameters, DataContext dataContext, RoleManager<IdentityRole> roleManager, EmailOptions emailOptions, EmailService emailService)
+        public IdentityService(UserManager<IdentityUser> userManager, JwtOptions jwtOptions, TokenValidationParameters tokenValidationParameters, DataContext dataContext, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _jwtOptions = jwtOptions;
             _tokenValidationParameters = tokenValidationParameters;
             _dataContext = dataContext;
             _roleManager = roleManager;
-            _emailOptions = emailOptions;
             // _emailService = emailService;
+            //_emailOptions = emailOptions;
         }
         
         public async Task<AuthenticationResult> RegisterAsync(string email, string password)
@@ -76,7 +76,12 @@ namespace BallanceRecordApi.Services
                 };
             }
 
-            return await SendEmailAsync(newUser.Email, newUser.Id, EmailType.Register);
+            return new AuthenticationResult
+            {
+                Success = true,
+                Messages = new []{"Please check your inbox in order to validate your email.", newUser.Id, await _userManager.GenerateEmailConfirmationTokenAsync(newUser)}
+            };
+            // return await SendEmailAsync(newUser.Email, newUser.Id, EmailType.Register);
             // return await GenerateAuthenticationResultForUserAsync(newUser);
         }
         
@@ -233,7 +238,10 @@ namespace BallanceRecordApi.Services
         {
             var user = await _userManager.FindByEmailAsync(email);
 
-            return await SendEmailAsync(email, user.Id, EmailType.Reset);
+            return new AuthenticationResult
+            {
+                Messages = new []{"A validation link has been sent to your email.", await _userManager.GeneratePasswordResetTokenAsync(user)}
+            };
         }
 
         private ClaimsPrincipal GetPrincipalFromToken(string token)
@@ -327,50 +335,45 @@ namespace BallanceRecordApi.Services
             };
         }
 
-        private async Task<AuthenticationResult> SendEmailAsync(string email, string html)
-        {
-            throw new NotImplementedException();
-        }
-
-        private async Task<AuthenticationResult> SendEmailAsync(string email, string userId, EmailType type, string newEmail = null)
-        {
-            // throw new NotImplementedException();
-            try
-            {
-                var user = await _userManager.FindByIdAsync(userId);
-
-                var token = "";
-                /*switch (type)
-                {
-                    case EmailType.Register:
-                        token = await _userManager.GenerateEmailConfirmationTokenAsync(user); // TODO
-                        // await _emailService.SendAsync(_emailOptions.Username, user.Email,
-                            // "Ballance Record Email Confirmation", $"<a href=\"\"></a>");
-                        break;
-                    case EmailType.Reset:
-                        token = await _userManager.GeneratePasswordResetTokenAsync(user); // TODO
-                        
-                        break;
-                    case EmailType.EmailChange:
-                        token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail); // TODO
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(type), type, null);
-                }*/
-                throw new NotImplementedException();
-                
-                return new AuthenticationResult
-                {
-                    Messages = new []{"Confirmation email has been sent. Please check your inbox."}  // TODO: Refactor needed.
-                };
-            }
-            catch (Exception e)
-            {
-                return new AuthenticationResult
-                {
-                    Messages = new []{ "Email send failed.", e.StackTrace }
-                };
-            }
-        }
-    }
+//         private async Task<AuthenticationResult> SendEmailAsync(string email, string userId, EmailType type, string newEmail = null)
+//         {
+//             // throw new NotImplementedException();
+//             try
+//             {
+//                 var user = await _userManager.FindByIdAsync(userId);
+//
+//                 var token = "";
+//                 /*switch (type)
+//                 {
+//                     case EmailType.Register:
+//                         token = await _userManager.GenerateEmailConfirmationTokenAsync(user); // TODO
+//                         // await _emailService.SendAsync(_emailOptions.Username, user.Email,
+//                             // "Ballance Record Email Confirmation", $"<a href=\"\"></a>");
+//                         break;
+//                     case EmailType.Reset:
+//                         token = await _userManager.GeneratePasswordResetTokenAsync(user); // TODO
+//                         
+//                         break;
+//                     case EmailType.EmailChange:
+//                         token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail); // TODO
+//                         break;
+//                     default:
+//                         throw new ArgumentOutOfRangeException(nameof(type), type, null);
+//                 }*/
+//                 throw new NotImplementedException();
+//                 
+//                 return new AuthenticationResult
+//                 {
+//                     Messages = new []{"Confirmation email has been sent. Please check your inbox."}  // TODO: Refactor needed.
+//                 };
+//             }
+//             catch (Exception e)
+//             {
+//                 return new AuthenticationResult
+//                 {
+//                     Messages = new []{ "Email send failed.", e.StackTrace }
+//                 };
+//             }
+//         }
+     }
 }

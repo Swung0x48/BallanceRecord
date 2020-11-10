@@ -12,7 +12,7 @@ namespace BallanceRecordApi.Installers
             var emailOptions = new EmailOptions();
             configuration.Bind(nameof(emailOptions), emailOptions);
             services.AddSingleton(emailOptions);
-            services.AddSingleton<IEmailService, EmailService>();
+            services.AddScoped<IEmailService, EmailService>();
         }
     }
 }

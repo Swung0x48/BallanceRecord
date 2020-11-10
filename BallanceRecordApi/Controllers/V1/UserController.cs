@@ -12,9 +12,11 @@ namespace BallanceRecordApi.Controllers.V1
     public class UserController: Controller
     {
         private readonly IIdentityService _identityService;
-        public UserController(IIdentityService identityService)
+        private readonly IEmailService _emailService;
+        public UserController(IIdentityService identityService, IEmailService emailService)
         {
             _identityService = identityService;
+            _emailService = emailService;
         }
 
         [HttpPost(ApiRoutes.Identity.Register)]
@@ -36,11 +38,19 @@ namespace BallanceRecordApi.Controllers.V1
                     Errors = authResponse.Messages
                 });
             }
+
+            var rawHtml = await System.IO.File.ReadAllTextAsync("Static/EmailContent.html");
+            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
+            var locationUri = $"{baseUrl}/{ApiRoutes.Identity.Confirmation}?userid={authResponse.Messages.ToArray()[1]}&token={authResponse.Messages.ToArray()[2]}";
+            var emailContent = rawHtml.Replace("{{link}}", locationUri);
+            await _emailService.SendAsync(request.Email, "Ballance Register Confirmation Email", emailContent);
             
-            return Ok(new AuthSuccessResponse
+            return Unauthorized(new AuthFailResponse
             {
-                Token = authResponse.Token,
-                RefreshToken = authResponse.RefreshToken
+                Errors = new []
+                {
+                    authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x))
+                }
             });
         }
         
