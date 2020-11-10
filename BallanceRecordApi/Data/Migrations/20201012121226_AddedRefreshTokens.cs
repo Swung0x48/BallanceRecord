@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace BallanceRecordApi.Migrations
+namespace BallanceRecordApi.Data.Migrations
 {
     public partial class AddedRefreshTokens : Migration
     {
