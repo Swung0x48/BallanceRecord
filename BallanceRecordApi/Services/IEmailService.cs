@@ -4,6 +4,6 @@ namespace BallanceRecordApi.Services
 {
     public interface IEmailService
     {
-        Task SendAsync(string from, string to, string subject, string html);
+        Task SendAsync(string to, string subject, string html);
     }
 }
