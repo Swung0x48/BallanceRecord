@@ -177,9 +177,9 @@ namespace BallanceRecordApi.Services
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
-        public async Task<AuthenticationResult> ConfirmEmailAsync(string email, string token)
+        public async Task<AuthenticationResult> ConfirmEmailAsync(string userId, string token)
         {
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = await _userManager.FindByIdAsync(userId);
 
             if (user is null)
             {
