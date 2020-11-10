@@ -41,8 +41,10 @@ namespace BallanceRecordApi.Controllers.V1
 
             var rawHtml = await System.IO.File.ReadAllTextAsync("Static/EmailContent.html");
             var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-            var locationUri = $"{baseUrl}/{ApiRoutes.Identity.Confirmation}?userid={authResponse.Messages.ToArray()[1]}&token={authResponse.Messages.ToArray()[2]}";
-            var emailContent = rawHtml.Replace("{{link}}", locationUri);
+            var locationUri = $"{baseUrl}/{ApiRoutes.Identity.Confirmation}" +
+                              $"?userid={Uri.EscapeDataString(authResponse.Messages.ToArray()[1])}" +
+                              $"&token={Uri.EscapeDataString(authResponse.Messages.ToArray()[2])}";
+            var emailContent = rawHtml.Replace("{link}", locationUri);
             await _emailService.SendAsync(request.Email, "Ballance Register Confirmation Email", emailContent);
             
             return Unauthorized(new AuthFailResponse
@@ -92,7 +94,7 @@ namespace BallanceRecordApi.Controllers.V1
             });
         }
         
-        [HttpPost(ApiRoutes.Identity.Email)]
+        [HttpGet(ApiRoutes.Identity.Confirmation)]
         public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, string token)
         {
             var authResponse = await _identityService.ConfirmEmailAsync(userId, token);
