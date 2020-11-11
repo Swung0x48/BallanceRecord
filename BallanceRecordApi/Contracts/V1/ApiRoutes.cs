@@ -20,6 +20,8 @@ namespace BallanceRecordApi.Contracts.V1
             public const string Register = Prefix + "/user";
             public const string Refresh = Prefix + "/user/session";
             public const string Email = Prefix + "/user/email";
+            
+            public const string Confirmation = Prefix + "/user/confirmation";
         }
     }
 }
