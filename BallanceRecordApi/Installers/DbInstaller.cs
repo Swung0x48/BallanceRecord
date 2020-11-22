@@ -1,9 +1,11 @@
+using System;
 using BallanceRecordApi.Data;
 using BallanceRecordApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace BallanceRecordApi.Installers
 {
@@ -13,7 +15,10 @@ namespace BallanceRecordApi.Installers
         {
             services.AddDbContext<DataContext>(options =>
                 options.UseMySql(
-                    configuration.GetConnectionString("DefaultConnection")));
+                    configuration.GetConnectionString("DefaultConnection"),
+                    new MySqlServerVersion(new Version(8, 0, 21)) //TODO: Put this in appsettings.json
+                    )
+                );
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<DataContext>();
