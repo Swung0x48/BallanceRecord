@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using BallanceRecordApi.Options;
 using MailKit.Net.Smtp;
-using MailKit.Security;
 using MimeKit;
 using MimeKit.Text;
 
