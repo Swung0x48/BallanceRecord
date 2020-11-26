@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
+using BallanceRecordApi.Cache;
 using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
@@ -26,6 +27,7 @@ namespace BallanceRecordApi.Controllers.V1
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
+        [Cached(600)]
         public async Task<IActionResult> GetAll()
         {
             var records = await _recordService.GetRecordsAsync();
@@ -40,6 +42,7 @@ namespace BallanceRecordApi.Controllers.V1
         }
         
         [HttpGet(ApiRoutes.Records.Get)]
+        [Cached(600)]
         public async Task<IActionResult> Get([FromRoute] Guid recordId)
         {
             var record = await _recordService.GetRecordByIdAsync(recordId);
