@@ -13,12 +13,12 @@ services:
     - "7001:443"
     depends_on:
       - db-server
+      - redis
     networks:
       - BallanceRecord
       
   db-server:
     image: mysql
-    restart: always
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: "temp233"
@@ -28,6 +28,12 @@ services:
       - BallanceRecord
     volumes:
       - db_data:/var/lib/mysql
+  
+  redis:
+    image: redis
+    container_name: redis
+    ports:
+    - "6379:6379"
 
 volumes:
   db_data: {}
