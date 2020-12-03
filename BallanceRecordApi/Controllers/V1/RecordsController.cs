@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using BallanceRecordApi.Cache;
 using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
+using BallanceRecordApi.Contracts.V1.Requests.Queries;
 using BallanceRecordApi.Contracts.V1.Responses;
 using BallanceRecordApi.Domain;
 using BallanceRecordApi.Extensions;
+using BallanceRecordApi.Helpers;
 using BallanceRecordApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -19,26 +22,31 @@ namespace BallanceRecordApi.Controllers.V1
     {
         private readonly IRecordService _recordService;
         private readonly IMapper _mapper;
+        private readonly IUriService _uriService;
         
-        public RecordsController(IRecordService recordService, IMapper mapper)
+        public RecordsController(IRecordService recordService, IMapper mapper, IUriService uriService)
         {
             _recordService = recordService;
             _mapper = mapper;
+            _uriService = uriService;
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
         [Cached(600)]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] PaginationQuery paginationQuery)
         {
-            var records = await _recordService.GetRecordsAsync();
+            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var records = await _recordService.GetRecordsAsync(pagination);
             var recordResponses = _mapper.Map<List<RecordResponse>>(records);
-            // var recordResponses = records.Select(record => new RecordResponse
-            // {
-            //     Id = record.Id,
-            //     Name = record.Name,
-            //     UserId = record.UserId
-            // }).ToList();
-            return Ok(recordResponses);
+
+            if (pagination is null || pagination.PageNumber < 1 || pagination.PageSize < 1)
+            {
+                return Ok(new PagedResponse<RecordResponse>(recordResponses));
+            }
+            
+            var pagedResponse = PaginationHelpers.CreatePagedResponse(_uriService, pagination, recordResponses);
+            
+            return Ok(pagedResponse);
         }
         
         [HttpGet(ApiRoutes.Records.Get)]
@@ -50,7 +58,7 @@ namespace BallanceRecordApi.Controllers.V1
             if (record is null)
                 return NotFound();
             
-            return Ok(_mapper.Map<RecordResponse>(record));
+            return Ok(new Response<RecordResponse>(_mapper.Map<RecordResponse>(record)));
         }
         
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
@@ -70,7 +78,7 @@ namespace BallanceRecordApi.Controllers.V1
             var updated = await _recordService.UpdateRecordAsync(record);
 
             if (updated)
-                return Ok(_mapper.Map<RecordResponse>(record));
+                return Ok(new Response<RecordResponse>(_mapper.Map<RecordResponse>(record)));
 
             return NotFound();
         }
@@ -129,10 +137,11 @@ namespace BallanceRecordApi.Controllers.V1
 
             await _recordService.CreateRecordAsync(record);
             
-            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-            var locationUri = $"{baseUrl}/{ApiRoutes.Records.Get.Replace("{recordId}", record.Id.ToString() )}";
+            //var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
+            //var locationUri = $"{baseUrl}/{ApiRoutes.Records.Get.Replace("{recordId}", record.Id.ToString() )}";
+            var locationUri = _uriService.GetRecordUri(record.Id.ToString());
             
-            return Created(locationUri, _mapper.Map<RecordResponse>(record));
+            return Created(locationUri, new Response<RecordResponse>(_mapper.Map<RecordResponse>(record)));
         }
     }
 }

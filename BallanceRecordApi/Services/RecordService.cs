@@ -17,9 +17,17 @@ namespace BallanceRecordApi.Services
             _dataContext = dataContext;
         }
 
-        public async Task<List<Record>> GetRecordsAsync()
+        public async Task<List<Record>> GetRecordsAsync(PaginationFilter paginationFilter = null)
         {
-            return await _dataContext.Records.ToListAsync();
+            if (paginationFilter is null)
+            {
+                return await _dataContext.Records.ToListAsync();
+            }
+
+            var skipSize = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+            return await _dataContext.Records
+                .Skip(skipSize).Take(paginationFilter.PageSize)
+                .ToListAsync();
         }
 
         public async Task<Record> GetRecordByIdAsync(Guid recordId)

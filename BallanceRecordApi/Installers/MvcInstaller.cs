@@ -5,6 +5,7 @@ using BallanceRecordApi.Options;
 using BallanceRecordApi.Services;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,6 +84,14 @@ namespace BallanceRecordApi.Installers
                         Type = ReferenceType.SecurityScheme
                     }}, new List<string>()}
                 });
+            });
+
+            services.AddSingleton<IUriService>(provider =>
+            {
+                var accessor = provider.GetRequiredService<IHttpContextAccessor>();
+                var request = accessor.HttpContext?.Request;
+                var absoluteUri = $"{request?.Scheme}://{request?.Host.ToUriComponent()}/";
+                return new UriService(absoluteUri);
             });
         }
     }
