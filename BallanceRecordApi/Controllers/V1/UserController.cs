@@ -13,10 +13,12 @@ namespace BallanceRecordApi.Controllers.V1
     {
         private readonly IIdentityService _identityService;
         private readonly IEmailService _emailService;
-        public UserController(IIdentityService identityService, IEmailService emailService)
+        private readonly IUriService _uriService;
+        public UserController(IIdentityService identityService, IEmailService emailService, IUriService uriService)
         {
             _identityService = identityService;
             _emailService = emailService;
+            _uriService = uriService;
         }
 
         [HttpPost(ApiRoutes.Identity.Register)]
@@ -40,11 +42,16 @@ namespace BallanceRecordApi.Controllers.V1
             }
 
             var rawHtml = await System.IO.File.ReadAllTextAsync("Static/EmailContent.html");
-            var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-            var locationUri = $"{baseUrl}/{ApiRoutes.Identity.Confirmation}" +
-                              $"?userid={Uri.EscapeDataString(authResponse.Messages.ToArray()[1])}" +
-                              $"&token={Uri.EscapeDataString(authResponse.Messages.ToArray()[2])}";
-            var emailContent = rawHtml.Replace("{link}", locationUri);
+            // var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
+            // var locationUri = $"{baseUrl}/{ApiRoutes.Identity.Confirmation}" +
+            //                   $"?userid={Uri.EscapeDataString(authResponse.Messages.ToArray()[1])}" +
+            //                   $"&token={Uri.EscapeDataString(authResponse.Messages.ToArray()[2])}";
+
+            var locationUri = _uriService.GetUserConfirmationUri(
+                authResponse.Messages.ToArray()[1],
+                authResponse.Messages.ToArray()[2]
+                );
+            var emailContent = rawHtml.Replace("{link}", locationUri.ToString());
             await _emailService.SendAsync(request.Email, "Ballance Register Confirmation Email", emailContent);
             
             return Unauthorized(new AuthFailResponse

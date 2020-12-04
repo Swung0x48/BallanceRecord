@@ -33,5 +33,15 @@ namespace BallanceRecordApi.Services
 
             return new Uri(modifiedUri);
         }
+
+        public Uri GetUserConfirmationUri(string userId, string token)
+        {
+            var uri = new Uri(_baseUri + ApiRoutes.Identity.Confirmation).ToString();
+
+            var modifiedUri = QueryHelpers.AddQueryString(uri, "userid", userId);
+            modifiedUri = QueryHelpers.AddQueryString(modifiedUri, "token", token);
+
+            return new Uri(modifiedUri);
+        }
     }
 }
