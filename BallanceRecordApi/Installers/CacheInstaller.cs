@@ -2,6 +2,7 @@ using BallanceRecordApi.Cache;
 using BallanceRecordApi.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
 namespace BallanceRecordApi.Installers
 {
@@ -18,6 +19,8 @@ namespace BallanceRecordApi.Installers
                 return;
             }
 
+            services.AddSingleton<IConnectionMultiplexer>(_ => 
+                ConnectionMultiplexer.Connect(redisCacheOptions.ConnectionString));
             services.AddStackExchangeRedisCache(options => options.Configuration = redisCacheOptions.ConnectionString);
             services.AddSingleton<IResponseCacheService, ResponseCacheService>();
         }
