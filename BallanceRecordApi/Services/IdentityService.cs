@@ -122,27 +122,27 @@ namespace BallanceRecordApi.Services
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
-        public async Task<AuthenticationResult> RefreshTokenAsync(string token, string refreshToken)
+        public async Task<AuthenticationResult> RefreshTokenAsync(string refreshToken)
         {
-            var validatedToken = GetPrincipalFromToken(token);
+            // var validatedToken = GetPrincipalFromToken(token);
+            //
+            // if (validatedToken is null)
+            // {
+            //     return new AuthenticationResult {Messages = new []{"Invalid Token"}};
+            // }
 
-            if (validatedToken is null)
-            {
-                return new AuthenticationResult {Messages = new []{"Invalid Token"}};
-            }
+            // var expiryDateUnix =
+            //     long.Parse(validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+            //
+            // var expiryDateTimeUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            //     .AddSeconds(expiryDateUnix);
+            //
+            // if (expiryDateTimeUtc > DateTime.UtcNow)
+            // {
+            //     return new AuthenticationResult {Messages = new []{"This token hasn't expired yet."}};
+            // }
 
-            var expiryDateUnix =
-                long.Parse(validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
-            
-            var expiryDateTimeUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                .AddSeconds(expiryDateUnix);
-
-            if (expiryDateTimeUtc > DateTime.UtcNow)
-            {
-                return new AuthenticationResult {Messages = new []{"This token hasn't expired yet."}};
-            }
-
-            var jti = validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+            // var jti = validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
 
             var storedRefreshToken = await _dataContext.RefreshTokens.SingleOrDefaultAsync(x => x.Token == refreshToken);
 
@@ -166,17 +166,16 @@ namespace BallanceRecordApi.Services
                 return new AuthenticationResult { Messages = new[] {"This refresh token has been used." }};
             }
 
-            if (storedRefreshToken.JwtId != jti)
-            {
-                return new AuthenticationResult { Messages = new[] {"This refresh token does not match this JWT."} };
-            }
+            // if (storedRefreshToken.JwtId != jti)
+            // {
+            //     return new AuthenticationResult { Messages = new[] {"This refresh token does not match this JWT."} };
+            // }
 
             storedRefreshToken.Used = true;
             _dataContext.RefreshTokens.Update(storedRefreshToken);
             await _dataContext.SaveChangesAsync();
             
-            var user = await _userManager.FindByIdAsync(validatedToken.Claims
-                .Single(x => x.Type == "id").Value);
+            var user = await _userManager.FindByIdAsync(storedRefreshToken.UserId);
             
             return await GenerateAuthenticationResultForUserAsync(user);
         }

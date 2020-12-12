@@ -85,7 +85,7 @@ namespace BallanceRecordApi.Controllers.V1
         [HttpPut(ApiRoutes.Identity.Refresh)]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
-            var authResponse = await _identityService.RefreshTokenAsync(request.Token, request.RefreshToken);
+            var authResponse = await _identityService.RefreshTokenAsync(request.RefreshToken);
             if (!authResponse.Success)
             {
                 return BadRequest(new AuthFailResponse
