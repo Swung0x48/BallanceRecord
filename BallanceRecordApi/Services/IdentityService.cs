@@ -45,7 +45,7 @@ namespace BallanceRecordApi.Services
             //_emailOptions = emailOptions;
         }
         
-        public async Task<AuthenticationResult> RegisterAsync(string email, string password)
+        public async Task<AuthenticationResult> RegisterAsync(string email, string password, string username)
         {
             var existingUser = await _userManager.FindByEmailAsync(email);
 
@@ -62,7 +62,7 @@ namespace BallanceRecordApi.Services
             {
                 Id = newUserId.ToString(),
                 Email = email,
-                UserName = email,
+                UserName = username,
                 EmailConfirmed = false
             };
             

@@ -32,7 +32,7 @@ namespace BallanceRecordApi.Controllers.V1
                 });
             }
             
-            var authResponse = await _identityService.RegisterAsync(request.Email, request.Password);
+            var authResponse = await _identityService.RegisterAsync(request.Email, request.Password, request.Username);
             if (!authResponse.Success)
             {
                 return Unauthorized(new AuthFailResponse
