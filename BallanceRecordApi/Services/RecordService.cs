@@ -42,16 +42,16 @@ namespace BallanceRecordApi.Services
             return hasCreated > 0;
         }
 
-        public async Task<bool> UserOwnsPostAsync(Guid recordId, string userId)
+        public async Task<bool> UserOwnsRecordAsync(Guid recordId, string userId)
         {
-            var post = await _dataContext.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == recordId);
+            var record = await _dataContext.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == recordId);
 
-            if (post is null)
+            if (record is null)
             {
                 return false;
             }
 
-            if (post.UserId != userId)
+            if (record.UserId != userId)
             {
                 return false;
             }

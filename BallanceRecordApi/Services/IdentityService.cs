@@ -22,8 +22,6 @@ namespace BallanceRecordApi.Services
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly JwtOptions _jwtOptions;
-        // private readonly EmailService _emailService;
-        // private readonly EmailOptions _emailOptions;
         private readonly TokenValidationParameters _tokenValidationParameters;
         private readonly DataContext _dataContext;
 
@@ -41,8 +39,6 @@ namespace BallanceRecordApi.Services
             _tokenValidationParameters = tokenValidationParameters;
             _dataContext = dataContext;
             _roleManager = roleManager;
-            // _emailService = emailService;
-            //_emailOptions = emailOptions;
         }
         
         public async Task<AuthenticationResult> RegisterAsync(string email, string password, string username)
@@ -337,46 +333,5 @@ namespace BallanceRecordApi.Services
                 RefreshToken = refreshToken.Token
             };
         }
-
-//         private async Task<AuthenticationResult> SendEmailAsync(string email, string userId, EmailType type, string newEmail = null)
-//         {
-//             // throw new NotImplementedException();
-//             try
-//             {
-//                 var user = await _userManager.FindByIdAsync(userId);
-//
-//                 var token = "";
-//                 /*switch (type)
-//                 {
-//                     case EmailType.Register:
-//                         token = await _userManager.GenerateEmailConfirmationTokenAsync(user); // TODO
-//                         // await _emailService.SendAsync(_emailOptions.Username, user.Email,
-//                             // "Ballance Record Email Confirmation", $"<a href=\"\"></a>");
-//                         break;
-//                     case EmailType.Reset:
-//                         token = await _userManager.GeneratePasswordResetTokenAsync(user); // TODO
-//                         
-//                         break;
-//                     case EmailType.EmailChange:
-//                         token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail); // TODO
-//                         break;
-//                     default:
-//                         throw new ArgumentOutOfRangeException(nameof(type), type, null);
-//                 }*/
-//                 throw new NotImplementedException();
-//                 
-//                 return new AuthenticationResult
-//                 {
-//                     Messages = new []{"Confirmation email has been sent. Please check your inbox."}  // TODO: Refactor needed.
-//                 };
-//             }
-//             catch (Exception e)
-//             {
-//                 return new AuthenticationResult
-//                 {
-//                     Messages = new []{ "Email send failed.", e.StackTrace }
-//                 };
-//             }
-//         }
-     }
+    }
 }
