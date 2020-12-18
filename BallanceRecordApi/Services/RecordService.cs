@@ -21,11 +21,12 @@ namespace BallanceRecordApi.Services
         {
             if (paginationFilter is null)
             {
-                return await _dataContext.Records.ToListAsync();
+                return await _dataContext.Records.Include(x => x.User).ToListAsync();
             }
 
             var skipSize = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
             return await _dataContext.Records
+                .Include(x => x.User)
                 .Skip(skipSize).Take(paginationFilter.PageSize)
                 .ToListAsync();
         }
