@@ -40,12 +40,12 @@ namespace BallanceRecordApi.Services
             _dataContext = dataContext;
             _roleManager = roleManager;
         }
-        
+
         public async Task<AuthenticationResult> RegisterAsync(string email, string password, string username)
         {
             var existingUser = await _userManager.FindByEmailAsync(email);
 
-            if (!(existingUser is null))
+            if (existingUser is not null)
             {
                 return new AuthenticationResult
                 {
