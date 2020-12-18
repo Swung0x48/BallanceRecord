@@ -41,6 +41,5 @@ namespace BallanceRecordApi.IntegrationTest
             returnedRecord.Id.Should().Be(recordCreated.Id);
             returnedRecord.Name.Should().Be("Testinggggg");
         }
-        
     }
 }
