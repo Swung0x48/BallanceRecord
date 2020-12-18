@@ -51,6 +51,7 @@ namespace BallanceRecordApi.IntegrationTest
             var response = await TestClient.PostAsJsonAsync(ApiRoutes.Identity.Register, new UserRegistrationRequest
             {
                 Email = "test@example.com",
+                Username = "test",
                 Password = "Temp233"
             });
 

@@ -22,8 +22,6 @@ namespace BallanceRecordApi.Services
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly JwtOptions _jwtOptions;
-        // private readonly EmailService _emailService;
-        // private readonly EmailOptions _emailOptions;
         private readonly TokenValidationParameters _tokenValidationParameters;
         private readonly DataContext _dataContext;
 
@@ -41,15 +39,13 @@ namespace BallanceRecordApi.Services
             _tokenValidationParameters = tokenValidationParameters;
             _dataContext = dataContext;
             _roleManager = roleManager;
-            // _emailService = emailService;
-            //_emailOptions = emailOptions;
         }
-        
-        public async Task<AuthenticationResult> RegisterAsync(string email, string password)
+
+        public async Task<AuthenticationResult> RegisterAsync(string email, string password, string username)
         {
             var existingUser = await _userManager.FindByEmailAsync(email);
 
-            if (!(existingUser is null))
+            if (existingUser is not null)
             {
                 return new AuthenticationResult
                 {
@@ -62,7 +58,7 @@ namespace BallanceRecordApi.Services
             {
                 Id = newUserId.ToString(),
                 Email = email,
-                UserName = email,
+                UserName = username,
                 EmailConfirmed = false
             };
             
@@ -122,27 +118,27 @@ namespace BallanceRecordApi.Services
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
-        public async Task<AuthenticationResult> RefreshTokenAsync(string token, string refreshToken)
+        public async Task<AuthenticationResult> RefreshTokenAsync(string refreshToken)
         {
-            var validatedToken = GetPrincipalFromToken(token);
+            // var validatedToken = GetPrincipalFromToken(token);
+            //
+            // if (validatedToken is null)
+            // {
+            //     return new AuthenticationResult {Messages = new []{"Invalid Token"}};
+            // }
 
-            if (validatedToken is null)
-            {
-                return new AuthenticationResult {Messages = new []{"Invalid Token"}};
-            }
+            // var expiryDateUnix =
+            //     long.Parse(validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+            //
+            // var expiryDateTimeUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            //     .AddSeconds(expiryDateUnix);
+            //
+            // if (expiryDateTimeUtc > DateTime.UtcNow)
+            // {
+            //     return new AuthenticationResult {Messages = new []{"This token hasn't expired yet."}};
+            // }
 
-            var expiryDateUnix =
-                long.Parse(validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
-            
-            var expiryDateTimeUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-                .AddSeconds(expiryDateUnix);
-
-            if (expiryDateTimeUtc > DateTime.UtcNow)
-            {
-                return new AuthenticationResult {Messages = new []{"This token hasn't expired yet."}};
-            }
-
-            var jti = validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+            // var jti = validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
 
             var storedRefreshToken = await _dataContext.RefreshTokens.SingleOrDefaultAsync(x => x.Token == refreshToken);
 
@@ -166,17 +162,16 @@ namespace BallanceRecordApi.Services
                 return new AuthenticationResult { Messages = new[] {"This refresh token has been used." }};
             }
 
-            if (storedRefreshToken.JwtId != jti)
-            {
-                return new AuthenticationResult { Messages = new[] {"This refresh token does not match this JWT."} };
-            }
+            // if (storedRefreshToken.JwtId != jti)
+            // {
+            //     return new AuthenticationResult { Messages = new[] {"This refresh token does not match this JWT."} };
+            // }
 
             storedRefreshToken.Used = true;
             _dataContext.RefreshTokens.Update(storedRefreshToken);
             await _dataContext.SaveChangesAsync();
             
-            var user = await _userManager.FindByIdAsync(validatedToken.Claims
-                .Single(x => x.Type == "id").Value);
+            var user = await _userManager.FindByIdAsync(storedRefreshToken.UserId);
             
             return await GenerateAuthenticationResultForUserAsync(user);
         }
@@ -338,46 +333,5 @@ namespace BallanceRecordApi.Services
                 RefreshToken = refreshToken.Token
             };
         }
-
-//         private async Task<AuthenticationResult> SendEmailAsync(string email, string userId, EmailType type, string newEmail = null)
-//         {
-//             // throw new NotImplementedException();
-//             try
-//             {
-//                 var user = await _userManager.FindByIdAsync(userId);
-//
-//                 var token = "";
-//                 /*switch (type)
-//                 {
-//                     case EmailType.Register:
-//                         token = await _userManager.GenerateEmailConfirmationTokenAsync(user); // TODO
-//                         // await _emailService.SendAsync(_emailOptions.Username, user.Email,
-//                             // "Ballance Record Email Confirmation", $"<a href=\"\"></a>");
-//                         break;
-//                     case EmailType.Reset:
-//                         token = await _userManager.GeneratePasswordResetTokenAsync(user); // TODO
-//                         
-//                         break;
-//                     case EmailType.EmailChange:
-//                         token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail); // TODO
-//                         break;
-//                     default:
-//                         throw new ArgumentOutOfRangeException(nameof(type), type, null);
-//                 }*/
-//                 throw new NotImplementedException();
-//                 
-//                 return new AuthenticationResult
-//                 {
-//                     Messages = new []{"Confirmation email has been sent. Please check your inbox."}  // TODO: Refactor needed.
-//                 };
-//             }
-//             catch (Exception e)
-//             {
-//                 return new AuthenticationResult
-//                 {
-//                     Messages = new []{ "Email send failed.", e.StackTrace }
-//                 };
-//             }
-//         }
-     }
+    }
 }

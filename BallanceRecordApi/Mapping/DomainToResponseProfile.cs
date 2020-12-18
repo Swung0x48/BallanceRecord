@@ -1,6 +1,7 @@
 using AutoMapper;
 using BallanceRecordApi.Contracts.V1.Responses;
 using BallanceRecordApi.Domain;
+using Microsoft.AspNetCore.Identity;
 
 namespace BallanceRecordApi.Mapping
 {
@@ -8,7 +9,10 @@ namespace BallanceRecordApi.Mapping
     {
         public DomainToResponseProfile()
         {
-            CreateMap<Record, RecordResponse>();
+            CreateMap<Record, RecordResponse>()
+                .ForMember(dest => dest.Username,
+                    opt => 
+                        opt.MapFrom(src => src.User.UserName));
         }
     }
 }

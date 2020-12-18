@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using BallanceRecordApi.Cache;
@@ -65,7 +64,7 @@ namespace BallanceRecordApi.Controllers.V1
         [HttpPut(ApiRoutes.Records.Update)]
         public async Task<IActionResult> Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
         {
-            var userOwnsPost = await _recordService.UserOwnsPostAsync(recordId, HttpContext.GetUserId());
+            var userOwnsPost = await _recordService.UserOwnsRecordAsync(recordId, HttpContext.GetUserId());
 
             if (!userOwnsPost)
             {
@@ -87,7 +86,7 @@ namespace BallanceRecordApi.Controllers.V1
         [HttpDelete(ApiRoutes.Records.Delete)]
         public async Task<IActionResult> Delete([FromRoute] Guid recordId)
         {
-            var userOwnsPost = await _recordService.UserOwnsPostAsync(recordId, HttpContext.GetUserId());
+            var userOwnsPost = await _recordService.UserOwnsRecordAsync(recordId, HttpContext.GetUserId());
             var userIsAdmin = HttpContext.User.IsInRole("Admin");
             
             if (!userOwnsPost && !userIsAdmin)
