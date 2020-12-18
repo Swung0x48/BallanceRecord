@@ -26,7 +26,6 @@ namespace BallanceRecordApi.HealthChecks
             catch (Exception exception)
             {
                 return await Task.FromResult(HealthCheckResult.Unhealthy(exception.Message));
-                throw;
             }
         }
     }
