@@ -19,16 +19,31 @@ namespace BallanceRecordApi.Services
 
         public async Task<List<Record>> GetRecordsAsync(PaginationFilter paginationFilter = null)
         {
+            var records = _dataContext.Records.Include(x => x.User);
+            
             if (paginationFilter is null)
             {
-                return await _dataContext.Records.Include(x => x.User).ToListAsync();
+                return await records.ToListAsync();
             }
 
             var skipSize = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-            return await _dataContext.Records
-                .Include(x => x.User)
-                .Skip(skipSize).Take(paginationFilter.PageSize)
-                .ToListAsync();
+
+            return paginationFilter.OrderBy switch
+            {
+                PaginationFilter.OrderByType.HighScore => await records
+                    .OrderByDescending(x => x.Score)
+                    .ThenBy(xx => xx.Time)
+                    .Skip(skipSize)
+                    .Take(paginationFilter.PageSize)
+                    .ToListAsync(),
+                PaginationFilter.OrderByType.SpeedRun => await records
+                    .OrderBy(xx => xx.Time)
+                    .ThenByDescending(x => x.Score)
+                    .Skip(skipSize)
+                    .Take(paginationFilter.PageSize)
+                    .ToListAsync(),
+                _ => await records.Skip(skipSize).Take(paginationFilter.PageSize).ToListAsync()
+            };
         }
 
         public async Task<Record> GetRecordByIdAsync(Guid recordId)
@@ -48,14 +63,11 @@ namespace BallanceRecordApi.Services
             var record = await _dataContext.Records.AsNoTracking().SingleOrDefaultAsync(x => x.Id == recordId);
 
             if (record is null)
-            {
                 return false;
-            }
+            
 
             if (record.UserId != userId)
-            {
                 return false;
-            }
 
             return true;
         }
