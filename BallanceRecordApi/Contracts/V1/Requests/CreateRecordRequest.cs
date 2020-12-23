@@ -1,5 +1,3 @@
-using System;
-
 namespace BallanceRecordApi.Contracts.V1.Requests
 {
     public class CreateRecordRequest

@@ -4,8 +4,8 @@ namespace BallanceRecordApi.Domain
     {
         public enum OrderByType
         {
-            Highscore,
-            Speedrun
+            HighScore,
+            SpeedRun
         }
         
         public int PageNumber { get; set; }
