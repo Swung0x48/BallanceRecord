@@ -9,12 +9,14 @@ namespace BallanceRecordApi.Data.Migrations
             migrationBuilder.AddColumn<int>(
                 name: "Score",
                 table: "Records",
+                type: "int",
                 nullable: false,
                 defaultValue: 0);
 
             migrationBuilder.AddColumn<double>(
                 name: "Time",
                 table: "Records",
+                type: "double",
                 nullable: false,
                 defaultValue: 0.0);
         }
