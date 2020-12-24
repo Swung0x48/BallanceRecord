@@ -27,6 +27,7 @@ namespace BallanceRecordApi.Cache
             if (!cacheOptions.Enabled)
             {
                 await next();
+                return;
             }
 
             var cacheService = context.HttpContext.RequestServices.GetRequiredService<IResponseCacheService>();
