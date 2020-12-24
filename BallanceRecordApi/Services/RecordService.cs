@@ -48,7 +48,7 @@ namespace BallanceRecordApi.Services
 
         public async Task<Record> GetRecordByIdAsync(Guid recordId)
         {
-            return await _dataContext.Records.SingleOrDefaultAsync(x => x.Id == recordId);
+            return await _dataContext.Records.Include(x => x.User).SingleOrDefaultAsync(x => x.Id == recordId);
         }
 
         public async Task<bool> CreateRecordAsync(Record record)

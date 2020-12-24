@@ -139,8 +139,9 @@ namespace BallanceRecordApi.Controllers.V1
             //var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             //var locationUri = $"{baseUrl}/{ApiRoutes.Records.Get.Replace("{recordId}", record.Id.ToString() )}";
             var locationUri = _uriService.GetRecordUri(record.Id.ToString());
-            
-            return Created(locationUri, new Response<RecordResponse>(_mapper.Map<RecordResponse>(record)));
+
+            var recordResponse = new Response<RecordResponse>(_mapper.Map<RecordResponse>(await _recordService.GetRecordByIdAsync(record.Id)));
+            return Created(locationUri, recordResponse);
         }
     }
 }
