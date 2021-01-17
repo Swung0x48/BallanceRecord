@@ -127,6 +127,7 @@ namespace BallanceRecordApi.Controllers.V1
             {
                 Name = recordRequest.Name,
                 UserId = HttpContext.GetUserId(),
+                MapHash = recordRequest.MapHash,
                 Score = recordRequest.Score,
                 Time = recordRequest.Time
             };
@@ -136,10 +137,7 @@ namespace BallanceRecordApi.Controllers.V1
 
             await _recordService.CreateRecordAsync(record);
             
-            //var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-            //var locationUri = $"{baseUrl}/{ApiRoutes.Records.Get.Replace("{recordId}", record.Id.ToString() )}";
             var locationUri = _uriService.GetRecordUri(record.Id.ToString());
-
             var recordResponse = new Response<RecordResponse>(_mapper.Map<RecordResponse>(await _recordService.GetRecordByIdAsync(record.Id)));
             return Created(locationUri, recordResponse);
         }
