@@ -34,7 +34,6 @@ namespace BallanceRecordApi
                     await roleManager.CreateAsync(userRole);
                 }
             }
-
             await host.RunAsync();
         }
 
@@ -43,6 +42,8 @@ namespace BallanceRecordApi
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    // webBuilder.UseUrls("https://*:5001", "http://*:5000");
+                    webBuilder.UseUrls("https://*:5001", "http://*:5000");
                 });
     }
 }

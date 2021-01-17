@@ -326,6 +326,7 @@ namespace BallanceRecordApi.Services
 
             return new AuthenticationResult
             {
+                Username = user.UserName,
                 Success = true,
                 Token = tokenHandler.WriteToken(token),
                 RefreshToken = refreshToken.Token
