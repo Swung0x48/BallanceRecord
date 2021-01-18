@@ -16,7 +16,8 @@ void BallanceRecordClient::OnPreStartMenu()
 {
 	if (this->_isOffline)
 		m_bml->SendIngameMessage("An error occurred while logging in. Now running in offline mode.");
-	else {
+	else if (this->_isFirstTime) {
+		this->_isFirstTime = false;
 		std::stringstream ss;
 		ss << "Welcome back, " << this->_services->GetUsername() << '.';
 		m_bml->SendIngameMessage(ss.str().c_str());
@@ -64,6 +65,7 @@ void BallanceRecordClient::OnPreEndLevel()
 	array_Energy->GetElementValue(0, 5, &lifebouns);
 	array_CurrentLevel->GetElementValue(0, 0, &currentLevelNumber);
 	array_AllLevel->GetElementValue(currentLevelNumber - 1, 6, &levelBonus);
+	int score = points + lifes * lifebouns + levelBonus - 1;
 	
 	if (levelBonus != currentLevelNumber * 100)
 	{
@@ -75,23 +77,24 @@ void BallanceRecordClient::OnPreEndLevel()
 
 	std::stringstream filename;
 	filename << "3D Entities/Level/Level_" << std::setfill('0') << std::setw(2) << currentLevelNumber << ".nmo";
-	//std::string abspath = fs::current_path().string() + "\\..\\" + filename.str();
 	std::ifstream fs("../" + filename.str(), std::ios::in | std::ios::binary);
 	if (fs.fail())
 	{
 		m_bml->SendIngameMessage("Cannot identify map at this moment. This record won't be uploaded.");
 		return;
 	}
-	//auto abs = std::filesystem::current_path().parent_path().append(filename.str());
-	//std::ifstream fs(abs, std::ios::binary);
 	std::string hash;
 	std::thread hashThread([&]() {
-			hash = _services->Hash(fs);
+		hash = _services->Hash(fs);
+	});
+
+	bool uploadSucceed = false;
+	std::thread uploadThread([&]() {
+		uploadSucceed = _services->UploadRecord("test from client", score, (1000 - points) / 2.0, hash);
 	});
 	
 	std::stringstream istr;
-	auto print_clear = [&]()
-	{
+	auto print_clear = [&]() {
 		m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
 	};
 	
@@ -101,7 +104,7 @@ void BallanceRecordClient::OnPreEndLevel()
 	print_clear();
 	istr << "Level bouns: " << levelBonus;
 	print_clear();
-	istr << "Score: " << points + lifes * lifebouns + levelBonus;
+	istr << "Score: " << score;
 	print_clear();
 	istr << "Calculating map hash...";
 	print_clear();
@@ -109,5 +112,10 @@ void BallanceRecordClient::OnPreEndLevel()
 	istr << "MapHash: " << hash;
 	print_clear();
 	
-	_services->UploadRecord("test from client", points + lifes * lifebouns + levelBonus - 1, (1000 - points) / 2.0, hash);
+	m_bml->SendIngameMessage("Uploading result...");
+	uploadThread.join();
+	if (uploadSucceed)
+		m_bml->SendIngameMessage("Record uploaded successfully.");
+	else
+		m_bml->SendIngameMessage("An error occurred while uploading.");
 }

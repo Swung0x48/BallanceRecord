@@ -15,6 +15,7 @@ extern "C" {
 class BallanceRecordClient: public IMod
 {
 	bool _isOffline = true;
+	bool _isFirstTime = true;
 	IProperty* _props[2];
 	Services* _services = nullptr;
 public:
