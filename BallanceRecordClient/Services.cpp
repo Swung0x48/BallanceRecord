@@ -43,3 +43,37 @@ std::string Services::Hash(std::ifstream& fs)
 	}
 	return sha256.getHash();
 }
+
+bool Services::UploadRecord(std::string name, int score, double time, std::string mapHash)
+{
+	nlohmann::json request;
+	request["name"] = name;
+	request["score"] = score;
+	request["time"] = time;
+	request["mapHash"] = mapHash;
+	cpr::Response rawResponse = Post(
+		cpr::Url{ this->_remoteAddress + RECORDS },
+		cpr::Header{
+			{"Content-Type", "application/json"},
+			{"Authorization", "bearer " + this->_jwt}
+		},
+		cpr::Body{ request.dump() });
+
+	if (rawResponse.status_code == 401)
+	{
+		Login();
+		rawResponse = Post(
+			cpr::Url{ this->_remoteAddress + RECORDS },
+			cpr::Header{
+				{"Content-Type", "application/json"},
+				{"Authorization", this->_jwt}
+			},
+			cpr::Body{ request.dump() });
+		if (rawResponse.status_code != 201)
+			return false;
+	}
+	
+	if (rawResponse.status_code == 201) return true;
+
+	return false;
+}
