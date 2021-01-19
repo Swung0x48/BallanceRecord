@@ -18,7 +18,7 @@ private:
 	std::string _username = "";
 public:
 	Services(const std::string& remoteAddress, const std::string& refreshToken);
-	std::string Hash(std::ifstream& fs);
+	static std::string Hash(std::ifstream& fs);
 	std::string GetUsername() { return this->_username; }
 	std::string Login();
 	bool UploadRecord(std::string name, int score, double time, std::string mapHash);

@@ -84,7 +84,7 @@ void BallanceRecordClient::OnPreEndLevel()
 		return;
 	}
 	std::string hash;
-	std::thread hashThread([&]() {
+	std::thread hashThread([this, &hash, &fs]() {
 		hash = _services->Hash(fs);
 	});
 
@@ -94,7 +94,7 @@ void BallanceRecordClient::OnPreEndLevel()
 	});
 	
 	std::stringstream istr;
-	auto print_clear = [&]() {
+	auto print_clear = [this, &istr]() {
 		m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
 	};
 	
