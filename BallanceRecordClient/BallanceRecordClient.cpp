@@ -7,6 +7,7 @@
 #include "Services.h"
 #include <iomanip>
 #include <thread>
+#include <BallanceRecordClient/Utils.h>
 
 IMod* BMLEntry(IBML* bml) {
 	return new BallanceRecordClient(bml);
@@ -14,32 +15,28 @@ IMod* BMLEntry(IBML* bml) {
 
 void BallanceRecordClient::OnPreStartMenu()
 {
-	if (this->_isOffline)
-		m_bml->SendIngameMessage("An error occurred while logging in. Now running in offline mode.");
-	else if (this->_isFirstTime) {
-		this->_isFirstTime = false;
-		std::stringstream ss;
-		ss << "Welcome back, " << this->_services->GetUsername() << '.';
-		m_bml->SendIngameMessage(ss.str().c_str());
+	if (this->_isFirstDisplay) {
+		this->_isFirstDisplay = false;
+
+		if (this->_isOffline)
+			m_bml->SendIngameMessage("An error occurred while logging in. Now running in offline mode.");
+		else {
+			std::stringstream ss;
+			ss << "Welcome back, " << this->_services->GetUsername() << '.';
+			m_bml->SendIngameMessage(ss.str().c_str());
+		}
 	}
+
+	BGui::Gui gui;
+	auto a = gui.AddTextLabel("aaa", "SdafR dsds", ExecuteBB::GAMEFONT_01, 0.03f, 0.8f, 0.2f, 0.03f);
+	a->SetAlignment(ALIGN_LEFT);
+	gui.SetVisible(true);
 }
 
 void BallanceRecordClient::OnLoad()
 {
 	// Init config entries
-	GetConfig()->SetCategoryComment("Remote", "Remote settings");
-	_props[0] = GetConfig()->GetProperty("Remote", "Address");
-	_props[0]->SetComment("Remote server address");
-	_props[0]->SetDefaultString("REMOTE_ADDR_HERE");
-	
-	GetConfig()->SetCategoryComment("Account", "Account settings");
-	_props[1] = GetConfig()->GetProperty("Account", "APIKey");
-	_props[1]->SetComment("This is the token from the website");
-	_props[1]->SetDefaultString("YOUR_KEY_HERE");
-
-	const std::string remoteAddress = _props[0]->GetString();
-	const std::string refreshToken = _props[1]->GetString();
-	_services = new Services(remoteAddress, refreshToken);
+	_services = Services::Create(GetConfig(), this->_props);
 
 	std::string newToken = _services->Login();
 	if (newToken.empty())
@@ -48,6 +45,38 @@ void BallanceRecordClient::OnLoad()
 	}
 	this->_isOffline = false;
 	_props[1]->SetString(newToken.c_str());
+}
+
+void BallanceRecordClient::OnStartLevel()
+{
+	if (!this->_isOffline) {
+		int currentLevelNumber;
+		CKDataArray* array_CurrentLevel = m_bml->GetArrayByName("CurrentLevel");
+		array_CurrentLevel->GetElementValue(0, 0, &currentLevelNumber);
+
+		std::stringstream filename;
+		filename << "3D Entities/Level/Level_" << std::setfill('0') << std::setw(2) << currentLevelNumber << ".nmo";
+		std::ifstream fs("../" + filename.str(), std::ios::in | std::ios::binary);
+		if (fs.fail())
+		{
+			m_bml->SendIngameMessage("Cannot identify map at this moment. This record won't be uploaded.");
+			return;
+		}
+		/*std::thread hashThread([this, &fs]() {
+			_mapHash = Utils::Hash(fs);
+		});*/
+		_mapHash = Utils::Hash(fs);
+		/*this->_threads.insert(std::make_pair("hash", [this, &fs]() {
+				_mapHash = Utils::Hash(fs);
+			})
+		);*/
+	}
+	
+}
+
+void BallanceRecordClient::OnProcess() 
+{
+
 }
 
 void BallanceRecordClient::OnPreEndLevel()
@@ -74,23 +103,11 @@ void BallanceRecordClient::OnPreEndLevel()
 
 		return;
 	}
-
-	std::stringstream filename;
-	filename << "3D Entities/Level/Level_" << std::setfill('0') << std::setw(2) << currentLevelNumber << ".nmo";
-	std::ifstream fs("../" + filename.str(), std::ios::in | std::ios::binary);
-	if (fs.fail())
-	{
-		m_bml->SendIngameMessage("Cannot identify map at this moment. This record won't be uploaded.");
-		return;
-	}
-	std::string hash;
-	std::thread hashThread([this, &hash, &fs]() {
-		hash = _services->Hash(fs);
-	});
+	//this->_threads["hash"].join();
 
 	bool uploadSucceed = false;
 	std::thread uploadThread([&]() {
-		uploadSucceed = _services->UploadRecord("test from client", score, (1000 - points) / 2.0, hash);
+		uploadSucceed = _services->UploadRecord("test from client", score, (1000 - points) / 2.0, this->_mapHash);
 	});
 	
 	std::stringstream istr;
@@ -108,8 +125,7 @@ void BallanceRecordClient::OnPreEndLevel()
 	print_clear();
 	istr << "Calculating map hash...";
 	print_clear();
-	hashThread.join();
-	istr << "MapHash: " << hash;
+	istr << "MapHash: " << this->_mapHash;
 	print_clear();
 	
 	m_bml->SendIngameMessage("Uploading result...");

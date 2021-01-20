@@ -30,11 +30,15 @@
     <ClInclude Include="BallanceRecordClient.h" />
     <ClInclude Include="Services.h" />
     <ClInclude Include="sha256.h" />
+    <ClInclude Include="Timer.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BallanceRecordClient.cpp" />
     <ClCompile Include="Services.cpp" />
     <ClCompile Include="sha256.cpp" />
+    <ClCompile Include="Timer.cpp" />
+    <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

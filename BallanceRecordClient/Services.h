@@ -1,6 +1,8 @@
 #pragma once
 #define _SILENCE_CXX17_C_HEADER_DEPRECATION_WARNING
 
+#include <BML/IConfig.h>
+//#include <BallanceRecordClient/BallanceRecordClient.h>
 #include <string>
 
 class IBML;
@@ -18,7 +20,11 @@ private:
 	std::string _username = "";
 public:
 	Services(const std::string& remoteAddress, const std::string& refreshToken);
-	static std::string Hash(std::ifstream& fs);
+	static Services* Create(IConfig* config, IProperty** props);
+	int GetCurrentLevel();
+	int GetPoints();
+	int GetLives();
+	int GetScore();
 	std::string GetUsername() { return this->_username; }
 	std::string Login();
 	bool UploadRecord(std::string name, int score, double time, std::string mapHash);

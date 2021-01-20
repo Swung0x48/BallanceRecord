@@ -10,6 +10,20 @@ Services::Services(const std::string& remoteAddress, const std::string& refreshT
 	_refreshToken(refreshToken)
 {}
 
+Services* Services::Create(IConfig* config, IProperty** props) {
+	config->SetCategoryComment("Remote", "Remote settings");
+	props[0] = config->GetProperty("Remote", "Address");
+	props[0]->SetComment("Remote server address");
+	props[0]->SetDefaultString("REMOTE_ADDR_HERE");
+
+	config->SetCategoryComment("Account", "Account settings");
+	props[1] = config->GetProperty("Account", "APIKey");
+	props[1]->SetComment("This is the token from the website");
+	props[1]->SetDefaultString("YOUR_KEY_HERE");
+
+	return new Services(props[0]->GetString(), props[1]->GetString());
+}
+
 std::string Services::Login()
 {
 	nlohmann::json request;
@@ -29,21 +43,6 @@ std::string Services::Login()
 	return this->_refreshToken;
 }
 
-
-std::string Services::Hash(std::ifstream& fs)
-{
-	const int BUF_SIZE = 256;
-	SHA256 sha256;
-	std::vector<char> buffer(BUF_SIZE, 0);
-	while (!fs.eof())
-	{
-		fs.read(buffer.data(), buffer.size());
-		std::streamsize readSize = fs.gcount();
-		sha256.add(buffer.data(), readSize);
-	}
-	return sha256.getHash();
-}
-
 bool Services::UploadRecord(std::string name, int score, double time, std::string mapHash)
 {
 	nlohmann::json request;
@@ -54,8 +53,8 @@ bool Services::UploadRecord(std::string name, int score, double time, std::strin
 	cpr::Response rawResponse = Post(
 		cpr::Url{ this->_remoteAddress + RECORDS },
 		cpr::Header{
-			{"Content-Type", "application/json"},
-			{"Authorization", "bearer " + this->_jwt}
+			{ "Content-Type", "application/json" },
+			{ "Authorization", "bearer " + this->_jwt }
 		},
 		cpr::Body{ request.dump() });
 
