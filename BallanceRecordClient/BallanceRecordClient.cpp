@@ -7,7 +7,7 @@
 #include "Services.h"
 #include <iomanip>
 #include <thread>
-#include <BallanceRecordClient/Utils.h>
+#include "Utils.h"
 
 IMod* BMLEntry(IBML* bml) {
 	return new BallanceRecordClient(bml);
@@ -26,11 +26,6 @@ void BallanceRecordClient::OnPreStartMenu()
 			m_bml->SendIngameMessage(ss.str().c_str());
 		}
 	}
-
-	BGui::Gui gui;
-	auto a = gui.AddTextLabel("aaa", "SdafR dsds", ExecuteBB::GAMEFONT_01, 0.03f, 0.8f, 0.2f, 0.03f);
-	a->SetAlignment(ALIGN_LEFT);
-	gui.SetVisible(true);
 }
 
 void BallanceRecordClient::OnLoad()
@@ -41,37 +36,32 @@ void BallanceRecordClient::OnLoad()
 	std::string newToken = _services->Login();
 	if (newToken.empty())
 	{
+		this->_isOffline = true;
 		return;
 	}
 	this->_isOffline = false;
 	_props[1]->SetString(newToken.c_str());
 }
 
+void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING masterName,
+	CK_CLASSID filterClass, BOOL addtoscene, BOOL reuseMeshes, BOOL reuseMaterials,
+	BOOL dynamic, XObjectArray* objArray, CKObject* masterObj) {
+	if (this->_isOffline) return;
+	if (!isMap) return;
+
+	std::filesystem::path path = "../" + std::string(filename);
+	std::ifstream fs(path, std::ios::in | std::ios::binary);
+	if (fs.fail())
+	{
+		m_bml->SendIngameMessage("Cannot identify map at this moment. This record won't be uploaded.");
+		return;
+	}
+	_mapHash = Utils::Hash(fs);
+}
+
 void BallanceRecordClient::OnStartLevel()
 {
-	if (!this->_isOffline) {
-		int currentLevelNumber;
-		CKDataArray* array_CurrentLevel = m_bml->GetArrayByName("CurrentLevel");
-		array_CurrentLevel->GetElementValue(0, 0, &currentLevelNumber);
 
-		std::stringstream filename;
-		filename << "3D Entities/Level/Level_" << std::setfill('0') << std::setw(2) << currentLevelNumber << ".nmo";
-		std::ifstream fs("../" + filename.str(), std::ios::in | std::ios::binary);
-		if (fs.fail())
-		{
-			m_bml->SendIngameMessage("Cannot identify map at this moment. This record won't be uploaded.");
-			return;
-		}
-		/*std::thread hashThread([this, &fs]() {
-			_mapHash = Utils::Hash(fs);
-		});*/
-		_mapHash = Utils::Hash(fs);
-		/*this->_threads.insert(std::make_pair("hash", [this, &fs]() {
-				_mapHash = Utils::Hash(fs);
-			})
-		);*/
-	}
-	
 }
 
 void BallanceRecordClient::OnProcess() 
