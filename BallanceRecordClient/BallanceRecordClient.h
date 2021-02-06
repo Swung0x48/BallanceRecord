@@ -3,7 +3,7 @@
 #include <BML/BMLAll.h>
 #include <BML/Gui.h>
 #include <unordered_map>
-#include <thread>
+#include <future>
 #include "Services.h"
 
 constexpr int BRC_MAJOR_VER = 0;
@@ -22,7 +22,7 @@ private:
 	bool _isFirstDisplay = true;
 	std::string _mapHash;
 	IProperty* _props[2];
-	std::unordered_map<std::string, std::thread> _threads;
+	std::unordered_map<std::string, std::future<bool>> _future;
 	Services* _services = nullptr;
 	//BGui::Gui* _gui = nullptr;
 public:
@@ -41,6 +41,7 @@ public:
 	virtual void OnStartLevel() override;
 	virtual void OnProcess() override;
 	virtual void OnPreEndLevel() override;
+	virtual void OnPostEndLevel() override;
 	virtual void OnLoad() override;
 };
 

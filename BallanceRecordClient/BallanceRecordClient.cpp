@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <thread>
 #include "Utils.h"
+#include <future>
 
 IMod* BMLEntry(IBML* bml) {
 	return new BallanceRecordClient(bml);
@@ -95,12 +96,7 @@ void BallanceRecordClient::OnPreEndLevel()
 	}
 	//this->_threads["hash"].join();
 
-	bool uploadSucceed = false;
-	std::thread uploadThread([&]() {
-		uploadSucceed = _services->UploadRecord("test from client", score, (1000 - points) / 2.0, this->_mapHash);
-	});
-	
-	std::stringstream istr;
+	/*std::stringstream istr;
 	auto print_clear = [this, &istr]() {
 		m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
 	};
@@ -116,12 +112,32 @@ void BallanceRecordClient::OnPreEndLevel()
 	istr << "Calculating map hash...";
 	print_clear();
 	istr << "MapHash: " << this->_mapHash;
-	print_clear();
+	print_clear();*/
 	
 	m_bml->SendIngameMessage("Uploading result...");
-	uploadThread.join();
-	if (uploadSucceed)
+	/*if (_future["upload"].valid()) {
+		_future["upload"].wait();
+		if (_future["upload"].get())
+			m_bml->SendIngameMessage("Record uploaded successfully.");
+		else
+			m_bml->SendIngameMessage("An error occurred while uploading.");
+	}*/
+	//bool uploadSucceed = _services->UploadRecord("test from client", score, (1000 - points) / 2.0, this->_mapHash);
+	_future["upload"] = std::async(&Services::UploadRecord, _services, "test from client", score, (1000 - points) / 2.0, this->_mapHash);
+	/*if (uploadSucceed.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+		if (uploadSucceed.get()) {
+			m_bml->SendIngameMessage("Record uploaded successfully.");
+		} else {
+			m_bml->SendIngameMessage("An error occurred while uploading.");
+		}
+	}*/
+}
+
+void BallanceRecordClient::OnPostEndLevel()
+{
+	if (_future["upload"].get()) {
 		m_bml->SendIngameMessage("Record uploaded successfully.");
-	else
+	} else {
 		m_bml->SendIngameMessage("An error occurred while uploading.");
+	}
 }

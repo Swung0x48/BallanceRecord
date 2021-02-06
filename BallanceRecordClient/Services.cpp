@@ -50,29 +50,44 @@ bool Services::UploadRecord(std::string name, int score, double time, std::strin
 	request["score"] = score;
 	request["time"] = time;
 	request["mapHash"] = mapHash;
-	cpr::Response rawResponse = Post(
-		cpr::Url{ this->_remoteAddress + RECORDS },
-		cpr::Header{
+	cpr::Url url = this->_remoteAddress + this->RECORDS;
+	cpr::Header header = {
 			{ "Content-Type", "application/json" },
 			{ "Authorization", "bearer " + this->_jwt }
-		},
-		cpr::Body{ request.dump() });
+	};
+	cpr::Body body = request.dump();
+
+	/*auto hasSucceeded = cpr::PostCallback([&](cpr::Response r) {
+		bool ret = true;
+		if (r.status_code == 401) {
+			ret = false;
+			Login();
+			cpr::PostCallback([&](cpr::Response r) {
+				if (r.status_code == 201) {
+					ret = true;
+					return;
+				}
+				ret = false;
+			}, url, header, body);
+		}
+		return ret;
+	}, url, header, body);
+	return hasSucceeded;*/
+
+	cpr::Response rawResponse = Post(url, header, body);
 
 	if (rawResponse.status_code == 401)
 	{
 		Login();
-		rawResponse = Post(
-			cpr::Url{ this->_remoteAddress + RECORDS },
-			cpr::Header{
-				{"Content-Type", "application/json"},
-				{"Authorization", this->_jwt}
-			},
-			cpr::Body{ request.dump() });
+		cpr::Header header = {
+			{ "Content-Type", "application/json" },
+			{ "Authorization", "bearer " + this->_jwt }
+		};
+		rawResponse = Post(url, header, body);
 		if (rawResponse.status_code != 201)
 			return false;
 	}
 	
 	if (rawResponse.status_code == 201) return true;
-
 	return false;
 }
