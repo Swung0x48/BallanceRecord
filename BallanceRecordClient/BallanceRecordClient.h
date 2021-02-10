@@ -5,11 +5,12 @@
 #include <unordered_map>
 #include <future>
 #include "Services.h"
+#include "Timer.h"
 
 constexpr int BRC_MAJOR_VER = 0;
-constexpr int BRC_MINOR_VER = 1;
+constexpr int BRC_MINOR_VER = 3;
 constexpr int BRC_PATCH_VER = 0;
-constexpr char BRC_VERSION[] = { BRC_MAJOR_VER + '0', '.', BRC_MINOR_VER + '0', '.', BRC_PATCH_VER + '0' };
+//constexpr char BRC_VERSION[] = { BRC_MAJOR_VER + '0', '.', BRC_MINOR_VER + '0', '.', BRC_PATCH_VER + '0' };
 
 extern "C" {
 	__declspec(dllexport) IMod* BMLEntry(IBML* bml);
@@ -18,6 +19,8 @@ extern "C" {
 class BallanceRecordClient: public IMod
 {
 private:
+	char BRC_VERSION[50];
+
 	std::mutex mtx_;
 	bool _isOffline = true;
 	bool _isFirstDisplay = true;
@@ -25,11 +28,14 @@ private:
 	IProperty* _props[2];
 	std::unordered_map<std::string, std::thread> thread_;
 	Services* _services = nullptr;
-	//BGui::Gui* _gui = nullptr;
+	Timer* timer_ = nullptr;
 public:
 	BallanceRecordClient(IBML* bml): IMod(bml) {}
 	virtual CKSTRING GetID() override { return "RecordClient"; }
-	virtual CKSTRING GetVersion() override { return BRC_VERSION; }
+	virtual CKSTRING GetVersion() override {
+		sprintf(BRC_VERSION, "%d.%d.%d", BRC_MAJOR_VER, BRC_MINOR_VER, BRC_PATCH_VER);
+		return BRC_VERSION; 
+	}
 	virtual CKSTRING GetName() override { return "Ballance Record Client"; }
 	virtual CKSTRING GetAuthor() override { return "Swung0x48"; }
 	virtual CKSTRING GetDescription() override { return "A mod to upload records to Hall of Fame."; }
@@ -44,5 +50,9 @@ public:
 	virtual void OnPreEndLevel() override;
 	virtual void OnPostEndLevel() override;
 	virtual void OnLoad() override;
+	virtual void OnCounterActive() override;
+	virtual void OnCounterInactive() override;
+	virtual void OnPauseLevel() override;
+	virtual void OnUnpauseLevel() override;
 };
 

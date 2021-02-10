@@ -44,25 +44,49 @@ void BallanceRecordClient::OnLoad()
 	_props[1]->SetString(newToken.c_str());
 }
 
+void BallanceRecordClient::OnCounterActive()
+{
+	this->timer_->Start();
+}
+
+void BallanceRecordClient::OnCounterInactive()
+{
+	this->timer_->Stop();
+}
+
+void BallanceRecordClient::OnPauseLevel()
+{
+	this->timer_->Stop();
+}
+
+void BallanceRecordClient::OnUnpauseLevel()
+{
+	this->timer_->Start();
+}
+
 void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING masterName,
 	CK_CLASSID filterClass, BOOL addtoscene, BOOL reuseMeshes, BOOL reuseMaterials,
 	BOOL dynamic, XObjectArray* objArray, CKObject* masterObj) {
 	if (this->_isOffline) return;
 	if (!isMap) return;
 
-	thread_.emplace(std::make_pair("hash", std::thread([&]() {
-			std::filesystem::path path = std::filesystem::current_path().parent_path().append(std::string(filename));
+	timer_ = new Timer(m_bml->GetTimeManager());
 
-			std::ifstream fs(path, std::ios::in | std::ios::binary);
+	auto hashLambda = [&](CKSTRING filename) {
+		std::filesystem::path path = std::filesystem::current_path().parent_path().append(std::string(filename));
 
-			if (fs.fail())
-				return;
-		
-			std::string mapHash = Utils::Hash(fs);
-			mtx_.lock();
-			_mapHash = mapHash;
-			mtx_.unlock();
-	})));
+		std::ifstream fs(path, std::ios::in | std::ios::binary);
+
+		if (fs.fail())
+			return;
+
+		std::string mapHash = Utils::Hash(fs);
+		mtx_.lock();
+		_mapHash = mapHash;
+		mtx_.unlock();
+	};
+
+	thread_["hash"] = std::thread(hashLambda, filename);
 }
 
 void BallanceRecordClient::OnStartLevel()
@@ -70,23 +94,32 @@ void BallanceRecordClient::OnStartLevel()
 	bool succeed = false;
 	if (thread_["hash"].joinable())
 		thread_["hash"].join();
+
+	mtx_.lock();
 	if (_mapHash.length() == 64)
 		succeed = true;
+	mtx_.unlock();
 	
 	if (!succeed)
-		m_bml->SendIngameMessage("Cannot identify map at this moment. This record won't be uploaded.");
+		m_bml->SendIngameMessage("Cannot identify map at this moment or you are offline. This record won't be uploaded.");
 	else
 		m_bml->SendIngameMessage(_mapHash.c_str());
+
+	timer_->Reset();
+	timer_->Stop();
 }
 
 void BallanceRecordClient::OnProcess() 
 {
-
+	if (m_bml->IsIngame())
+		timer_->Process();
 }
 
 void BallanceRecordClient::OnPreEndLevel()
 {
 	if (this->_isOffline) return;
+
+	timer_->Stop();
 	
 	int points, lifes, lifebouns, currentLevelNumber, levelBonus;
 	CKDataArray* array_Energy = m_bml->GetArrayByName("Energy");
@@ -127,7 +160,10 @@ void BallanceRecordClient::OnPreEndLevel()
 	print_clear();
 	istr << "MapHash: " << this->_mapHash;
 	print_clear();*/
-	
+	char buffer[50];
+	sprintf(buffer, "%lf", timer_->GetTime() / 1000.0);
+	m_bml->SendIngameMessage(buffer);
+
 	m_bml->SendIngameMessage("Uploading result...");
 	/*if (_future["upload"].valid()) {
 		_future["upload"].wait();
@@ -138,8 +174,9 @@ void BallanceRecordClient::OnPreEndLevel()
 	}*/
 	//bool uploadSucceed = _services->UploadRecord("test from client", score, (1000 - points) / 2.0, this->_mapHash);
 	thread_["upload"] = std::thread([&]() {
-		_services->UploadRecord("test from client", score, (1000 - points) / 2.0, this->_mapHash);
+		_services->UploadRecord("test from client", score, timer_->GetTime() / 1000.0, this->_mapHash);
 	});
+	timer_->Reset();
 	/*if (uploadSucceed.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 		if (uploadSucceed.get()) {
 			m_bml->SendIngameMessage("Record uploaded successfully.");
