@@ -18,11 +18,12 @@ extern "C" {
 class BallanceRecordClient: public IMod
 {
 private:
+	std::mutex mtx_;
 	bool _isOffline = true;
 	bool _isFirstDisplay = true;
 	std::string _mapHash;
 	IProperty* _props[2];
-	std::unordered_map<std::string, std::future<bool>> _future;
+	std::unordered_map<std::string, std::thread> thread_;
 	Services* _services = nullptr;
 	//BGui::Gui* _gui = nullptr;
 public:

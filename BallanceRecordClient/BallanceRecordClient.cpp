@@ -50,19 +50,33 @@ void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING 
 	if (this->_isOffline) return;
 	if (!isMap) return;
 
-	std::filesystem::path path = "../" + std::string(filename);
-	std::ifstream fs(path, std::ios::in | std::ios::binary);
-	if (fs.fail())
-	{
-		m_bml->SendIngameMessage("Cannot identify map at this moment. This record won't be uploaded.");
-		return;
-	}
-	_mapHash = Utils::Hash(fs);
+	thread_.emplace(std::make_pair("hash", std::thread([&]() {
+			std::filesystem::path path = std::filesystem::current_path().parent_path().append(std::string(filename));
+
+			std::ifstream fs(path, std::ios::in | std::ios::binary);
+
+			if (fs.fail())
+				return;
+		
+			std::string mapHash = Utils::Hash(fs);
+			mtx_.lock();
+			_mapHash = mapHash;
+			mtx_.unlock();
+	})));
 }
 
 void BallanceRecordClient::OnStartLevel()
 {
-
+	bool succeed = false;
+	if (thread_["hash"].joinable())
+		thread_["hash"].join();
+	if (_mapHash.length() == 64)
+		succeed = true;
+	
+	if (!succeed)
+		m_bml->SendIngameMessage("Cannot identify map at this moment. This record won't be uploaded.");
+	else
+		m_bml->SendIngameMessage(_mapHash.c_str());
 }
 
 void BallanceRecordClient::OnProcess() 
@@ -123,7 +137,9 @@ void BallanceRecordClient::OnPreEndLevel()
 			m_bml->SendIngameMessage("An error occurred while uploading.");
 	}*/
 	//bool uploadSucceed = _services->UploadRecord("test from client", score, (1000 - points) / 2.0, this->_mapHash);
-	_future["upload"] = std::async(&Services::UploadRecord, _services, "test from client", score, (1000 - points) / 2.0, this->_mapHash);
+	thread_["upload"] = std::thread([&]() {
+		_services->UploadRecord("test from client", score, (1000 - points) / 2.0, this->_mapHash);
+	});
 	/*if (uploadSucceed.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 		if (uploadSucceed.get()) {
 			m_bml->SendIngameMessage("Record uploaded successfully.");
@@ -135,7 +151,8 @@ void BallanceRecordClient::OnPreEndLevel()
 
 void BallanceRecordClient::OnPostEndLevel()
 {
-	if (_future["upload"].get()) {
+	if (thread_["upload"].joinable()) {
+		thread_["upload"].join();
 		m_bml->SendIngameMessage("Record uploaded successfully.");
 	} else {
 		m_bml->SendIngameMessage("An error occurred while uploading.");
