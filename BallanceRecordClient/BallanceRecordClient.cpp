@@ -72,8 +72,8 @@ void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING 
 
 	timer_ = new Timer(m_bml->GetTimeManager());
 
-	auto hashLambda = [&](CKSTRING filename) {
-		std::filesystem::path path = std::filesystem::current_path().parent_path().append(std::string(filename));
+	auto hashLambda = [&](std::string filename) {
+		std::filesystem::path path = std::filesystem::current_path().parent_path().append(filename);
 
 		std::ifstream fs(path, std::ios::in | std::ios::binary);
 
@@ -86,7 +86,7 @@ void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING 
 		mtx_.unlock();
 	};
 
-	thread_["hash"] = std::thread(hashLambda, filename);
+	thread_["hash"] = std::thread(hashLambda, std::string(filename));
 }
 
 void BallanceRecordClient::OnStartLevel()
@@ -122,16 +122,11 @@ void BallanceRecordClient::OnPreEndLevel()
 	timer_->Stop();
 	
 	int points, lifes, lifebouns, currentLevelNumber, levelBonus;
-	CKDataArray* array_Energy = m_bml->GetArrayByName("Energy");
-	array_Energy->GetElementValue(0, 0, &points);
-
-	CKDataArray* array_AllLevel = m_bml->GetArrayByName("AllLevel");
-	CKDataArray* array_CurrentLevel = m_bml->GetArrayByName("CurrentLevel");
-	
-	array_Energy->GetElementValue(0, 1, &lifes);
-	array_Energy->GetElementValue(0, 5, &lifebouns);
-	array_CurrentLevel->GetElementValue(0, 0, &currentLevelNumber);
-	array_AllLevel->GetElementValue(currentLevelNumber - 1, 6, &levelBonus);
+	m_bml->GetArrayByName("Energy")->GetElementValue(0, 0, &points);
+	m_bml->GetArrayByName("Energy")->GetElementValue(0, 1, &lifes);
+	m_bml->GetArrayByName("Energy")->GetElementValue(0, 5, &lifebouns);
+	m_bml->GetArrayByName("CurrentLevel")->GetElementValue(0, 0, &currentLevelNumber);
+	m_bml->GetArrayByName("AllLevel")->GetElementValue(currentLevelNumber - 1, 6, &levelBonus);
 	int score = points + lifes * lifebouns + levelBonus - 1;
 	
 	if (levelBonus != currentLevelNumber * 100)
@@ -141,49 +136,17 @@ void BallanceRecordClient::OnPreEndLevel()
 
 		return;
 	}
-	//this->_threads["hash"].join();
-
-	/*std::stringstream istr;
-	auto print_clear = [this, &istr]() {
-		m_bml->SendIngameMessage(istr.str().c_str()); istr.str("");
-	};
 	
-	istr << "Points: " << points;
-	print_clear();
-	istr << "Lifes: " << lifes;
-	print_clear();
-	istr << "Level bouns: " << levelBonus;
-	print_clear();
-	istr << "Score: " << score;
-	print_clear();
-	istr << "Calculating map hash...";
-	print_clear();
-	istr << "MapHash: " << this->_mapHash;
-	print_clear();*/
 	char buffer[50];
 	sprintf(buffer, "%lf", timer_->GetTime() / 1000.0);
 	m_bml->SendIngameMessage(buffer);
 
 	m_bml->SendIngameMessage("Uploading result...");
-	/*if (_future["upload"].valid()) {
-		_future["upload"].wait();
-		if (_future["upload"].get())
-			m_bml->SendIngameMessage("Record uploaded successfully.");
-		else
-			m_bml->SendIngameMessage("An error occurred while uploading.");
-	}*/
-	//bool uploadSucceed = _services->UploadRecord("test from client", score, (1000 - points) / 2.0, this->_mapHash);
+	
 	thread_["upload"] = std::thread([&]() {
 		_services->UploadRecord("test from client", score, timer_->GetTime() / 1000.0, this->_mapHash);
 	});
 	timer_->Reset();
-	/*if (uploadSucceed.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-		if (uploadSucceed.get()) {
-			m_bml->SendIngameMessage("Record uploaded successfully.");
-		} else {
-			m_bml->SendIngameMessage("An error occurred while uploading.");
-		}
-	}*/
 }
 
 void BallanceRecordClient::OnPostEndLevel()
