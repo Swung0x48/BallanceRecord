@@ -143,9 +143,10 @@ void BallanceRecordClient::OnPreEndLevel()
 
 	m_bml->SendIngameMessage("Uploading result...");
 	
-	thread_["upload"] = std::thread([&]() {
-		_services->UploadRecord("test from client", score, timer_->GetTime() / 1000.0, this->_mapHash);
-	});
+	// thread_["upload"] = std::thread([&]() {
+	// 	_services->UploadRecord("Empty.", score, timer_->GetTime() / 1000.0, this->_mapHash);
+	// });
+	thread_["upload"] = std::thread(&Services::UploadRecord, this->_services, "Empty.", score, timer_->GetTime() / 1000.0, this->_mapHash);
 	timer_->Reset();
 }
 

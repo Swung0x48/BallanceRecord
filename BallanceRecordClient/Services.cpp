@@ -43,10 +43,10 @@ std::string Services::Login()
 	return this->_refreshToken;
 }
 
-bool Services::UploadRecord(std::string name, int score, double time, std::string mapHash)
+bool Services::UploadRecord(std::string remark, int score, double time, std::string mapHash)
 {
 	nlohmann::json request;
-	request["name"] = name;
+	request["remark"] = remark;
 	request["score"] = score;
 	request["time"] = time;
 	request["mapHash"] = mapHash;
