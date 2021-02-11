@@ -46,22 +46,26 @@ void BallanceRecordClient::OnLoad()
 
 void BallanceRecordClient::OnCounterActive()
 {
-	this->timer_->Start();
+	if (!this->_isOffline)
+		this->timer_->Start();
 }
 
 void BallanceRecordClient::OnCounterInactive()
 {
-	this->timer_->Stop();
+	if (!this->_isOffline)
+		this->timer_->Stop();
 }
 
 void BallanceRecordClient::OnPauseLevel()
 {
-	this->timer_->Stop();
+	if (!this->_isOffline)
+		this->timer_->Stop();
 }
 
 void BallanceRecordClient::OnUnpauseLevel()
 {
-	this->timer_->Start();
+	if (!this->_isOffline)
+		this->timer_->Start();
 }
 
 void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING masterName,
@@ -105,13 +109,15 @@ void BallanceRecordClient::OnStartLevel()
 	else
 		m_bml->SendIngameMessage(_mapHash.c_str());
 
-	timer_->Reset();
-	timer_->Stop();
+	if (!this->_isOffline) {
+		timer_->Reset();
+		timer_->Stop();
+	}
 }
 
 void BallanceRecordClient::OnProcess() 
 {
-	if (m_bml->IsIngame())
+	if (m_bml->IsIngame() && !this->_isOffline)
 		timer_->Process();
 }
 
