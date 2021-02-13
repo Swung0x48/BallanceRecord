@@ -5,10 +5,9 @@
 #include <filesystem>
 #include <fstream>
 #include "Services.h"
-#include <iomanip>
-#include <thread>
 #include "Utils.h"
 #include <future>
+#include <chrono>
 
 IMod* BMLEntry(IBML* bml) {
 	return new BallanceRecordClient(bml);
@@ -82,27 +81,27 @@ void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING 
 		std::ifstream fs(path, std::ios::in | std::ios::binary);
 
 		if (fs.fail())
-			return;
+			return false;
 
 		std::string mapHash = Utils::Hash(fs);
-		mtx_.lock();
+		// mtx_.lock();
 		_mapHash = mapHash;
-		mtx_.unlock();
+		// mtx_.unlock();
+		return true;
 	};
 
-	thread_["hash"] = std::thread(hashLambda, std::string(filename));
+	future_["hash"] = std::async(std::launch::async, hashLambda, std::string(filename));
 }
 
 void BallanceRecordClient::OnStartLevel()
 {
 	bool succeed = false;
-	if (thread_["hash"].joinable())
-		thread_["hash"].join();
-
-	mtx_.lock();
-	if (_mapHash.length() == 64)
-		succeed = true;
-	mtx_.unlock();
+	if (future_["hash"].valid())
+		succeed = future_["hash"].get();
+	else {
+		if (_mapHash.length() == 64)
+			succeed = true;
+	}
 	
 	if (!succeed)
 		m_bml->SendIngameMessage("Cannot identify map at this moment or you are offline. This record won't be uploaded.");
@@ -133,7 +132,7 @@ void BallanceRecordClient::OnPreEndLevel()
 	m_bml->GetArrayByName("Energy")->GetElementValue(0, 5, &lifebouns);
 	m_bml->GetArrayByName("CurrentLevel")->GetElementValue(0, 0, &currentLevelNumber);
 	m_bml->GetArrayByName("AllLevel")->GetElementValue(currentLevelNumber - 1, 6, &levelBonus);
-	int score = points + lifes * lifebouns + levelBonus - 1;
+	int score = points + lifes * lifebouns + levelBonus;
 	
 	if (levelBonus != currentLevelNumber * 100)
 	{
@@ -152,16 +151,29 @@ void BallanceRecordClient::OnPreEndLevel()
 	// thread_["upload"] = std::thread([&]() {
 	// 	_services->UploadRecord("Empty.", score, timer_->GetTime() / 1000.0, this->_mapHash);
 	// });
-	thread_["upload"] = std::thread(&Services::UploadRecord, this->_services, "Empty.", score, timer_->GetTime() / 1000.0, this->_mapHash);
+	future_["upload"] = std::async(
+		std::launch::async, 
+		&Services::UploadRecord, 
+		this->_services, 
+		"Empty.", 
+		score, 
+		timer_->GetTime() / 1000.0, 
+		this->_mapHash, 
+		[&](const char* output) { m_bml->SendIngameMessage(output); }
+	);
 	timer_->Reset();
 }
 
 void BallanceRecordClient::OnPostEndLevel()
 {
-	if (thread_["upload"].joinable()) {
-		thread_["upload"].join();
+	if (future_["upload"].wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
 		m_bml->SendIngameMessage("Record uploaded successfully.");
 	} else {
 		m_bml->SendIngameMessage("An error occurred while uploading.");
 	}
+}
+
+void BallanceRecordClient::OnUnload()
+{
+	this->_props[1]->SetString(this->_services->GetApiKey().c_str());
 }

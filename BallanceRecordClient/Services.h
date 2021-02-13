@@ -1,5 +1,4 @@
 #pragma once
-#define _SILENCE_CXX17_C_HEADER_DEPRECATION_WARNING
 
 #include <BML/BMLAll.h>
 #include <string>
@@ -21,12 +20,9 @@ private:
 public:
 	Services(const std::string& remoteAddress, const std::string& refreshToken);
 	static Services* Create(IConfig* config, IProperty** props);
-	int GetCurrentLevel();
-	int GetPoints();
-	int GetLives();
-	int GetScore();
 	std::string GetUsername() { return this->_username; }
+	std::string GetApiKey() { return this->_refreshToken; }
 	std::string Login();
-	bool UploadRecord(std::string name, int score, double time, std::string mapHash);
+	bool UploadRecord(std::string remark, int score, double time, std::string mapHash, std::function<void(const char*)> output);
 };
 

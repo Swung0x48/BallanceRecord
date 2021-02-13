@@ -1,5 +1,4 @@
 #include "Services.h"
-#include "sha256.h"
 #include <fstream>
 #include <filesystem>
 #include <cpr/cpr.h>
@@ -43,7 +42,7 @@ std::string Services::Login()
 	return this->_refreshToken;
 }
 
-bool Services::UploadRecord(std::string remark, int score, double time, std::string mapHash)
+bool Services::UploadRecord(std::string remark, int score, double time, std::string mapHash, std::function<void(const char*)> output)
 {
 	nlohmann::json request;
 	request["remark"] = remark;
@@ -73,8 +72,9 @@ bool Services::UploadRecord(std::string remark, int score, double time, std::str
 		return ret;
 	}, url, header, body);
 	return hasSucceeded;*/
-
-	cpr::Response rawResponse = Post(url, header, body);
+	auto timeout = cpr::Timeout{ 5000 };
+	
+	cpr::Response rawResponse = Post(url, header, body, timeout);
 
 	if (rawResponse.status_code == 401)
 	{
@@ -83,7 +83,7 @@ bool Services::UploadRecord(std::string remark, int score, double time, std::str
 			{ "Content-Type", "application/json" },
 			{ "Authorization", "bearer " + this->_jwt }
 		};
-		rawResponse = Post(url, header, body);
+		rawResponse = Post(url, header, body, timeout);
 		if (rawResponse.status_code != 201)
 			return false;
 	}
