@@ -76,7 +76,7 @@ void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING 
 	timer_ = new Timer(m_bml->GetTimeManager());
 
 	auto hashLambda = [&](std::string filename) {
-		std::filesystem::path path = std::filesystem::current_path().parent_path().append(filename);
+		std::filesystem::path path = std::filesystem::current_path().parent_path().append(filename[0] == '.' ? filename.substr(3, filename.length()) : filename);
 
 		std::ifstream fs(path, std::ios::in | std::ios::binary);
 
