@@ -42,7 +42,7 @@ std::string Services::Login()
 	return this->_refreshToken;
 }
 
-bool Services::UploadRecord(std::string remark, int score, double time, std::string mapHash, std::function<void(const char*)> output)
+bool Services::UploadRecord(std::string remark, int score, double time, std::string mapHash)
 {
 	nlohmann::json request;
 	request["remark"] = remark;

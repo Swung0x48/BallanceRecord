@@ -158,8 +158,7 @@ void BallanceRecordClient::OnPreEndLevel()
 		"Empty.", 
 		score, 
 		timer_->GetTime() / 1000.0, 
-		this->_mapHash, 
-		[&](const char* output) { m_bml->SendIngameMessage(output); }
+		this->_mapHash
 	);
 	timer_->Reset();
 }

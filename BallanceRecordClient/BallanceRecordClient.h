@@ -29,6 +29,7 @@ private:
 	std::unordered_map<std::string, std::future<bool>> future_;
 	Services* _services = nullptr;
 	Timer* timer_ = nullptr;
+	BGui::Gui* gui_ = nullptr;
 public:
 	BallanceRecordClient(IBML* bml): IMod(bml) {}
 	virtual CKSTRING GetID() override { return "RecordClient"; }

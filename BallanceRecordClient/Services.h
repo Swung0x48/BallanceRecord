@@ -23,6 +23,6 @@ public:
 	std::string GetUsername() { return this->_username; }
 	std::string GetApiKey() { return this->_refreshToken; }
 	std::string Login();
-	bool UploadRecord(std::string remark, int score, double time, std::string mapHash, std::function<void(const char*)> output);
+	bool UploadRecord(std::string remark, int score, double time, std::string mapHash);
 };
 
