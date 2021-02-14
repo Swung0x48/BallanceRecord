@@ -9,7 +9,7 @@
 
 constexpr int BRC_MAJOR_VER = 0;
 constexpr int BRC_MINOR_VER = 3;
-constexpr int BRC_PATCH_VER = 0;
+constexpr int BRC_PATCH_VER = 1;
 //constexpr char BRC_VERSION[] = { BRC_MAJOR_VER + '0', '.', BRC_MINOR_VER + '0', '.', BRC_PATCH_VER + '0' };
 
 extern "C" {
@@ -26,7 +26,7 @@ private:
 	bool _isFirstDisplay = true;
 	std::string _mapHash;
 	IProperty* _props[2];
-	std::unordered_map<std::string, std::thread> thread_;
+	std::unordered_map<std::string, std::future<bool>> future_;
 	Services* _services = nullptr;
 	Timer* timer_ = nullptr;
 public:
@@ -54,5 +54,6 @@ public:
 	virtual void OnCounterInactive() override;
 	virtual void OnPauseLevel() override;
 	virtual void OnUnpauseLevel() override;
+	virtual void OnUnload() override;
 };
 
