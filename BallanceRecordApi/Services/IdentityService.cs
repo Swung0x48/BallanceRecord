@@ -148,15 +148,15 @@ namespace BallanceRecordApi.Services
             {
                 return new AuthenticationResult { Messages = new []{"This refresh token has expired." }};
             }
+            
+            if (storedRefreshToken.Used)
+            {
+                return new AuthenticationResult { Messages = new[] {"This refresh token has been used." }};
+            }
 
             if (storedRefreshToken.Invalidated)
             {
                 return new AuthenticationResult { Messages = new []{"This refresh token has been invalidated." }};
-            }
-
-            if (storedRefreshToken.Used)
-            {
-                return new AuthenticationResult { Messages = new[] {"This refresh token has been used." }};
             }
 
             // if (storedRefreshToken.JwtId != jti)
@@ -165,6 +165,7 @@ namespace BallanceRecordApi.Services
             // }
 
             storedRefreshToken.Used = true;
+            storedRefreshToken.Invalidated = true;
             _dataContext.RefreshTokens.Update(storedRefreshToken);
             await _dataContext.SaveChangesAsync();
             
@@ -325,6 +326,7 @@ namespace BallanceRecordApi.Services
 
             return new AuthenticationResult
             {
+                Username = user.UserName,
                 Success = true,
                 Token = tokenHandler.WriteToken(token),
                 RefreshToken = refreshToken.Token

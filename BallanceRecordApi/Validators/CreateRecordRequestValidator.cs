@@ -7,9 +7,10 @@ namespace BallanceRecordApi.Validators
     {
         public CreateRecordRequestValidator()
         {
-            RuleFor(x => x.Name)
-                .NotEmpty()
-                .Matches("^[a-zA-Z0-9 ]*$");
+            RuleFor(x => x.MapHash)
+                .Length(64);
+            RuleFor(x => x.Time)
+                .GreaterThanOrEqualTo(0);
         }
     }
 }

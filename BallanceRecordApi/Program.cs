@@ -29,12 +29,10 @@ namespace BallanceRecordApi
 
                 if (!await roleManager.RoleExistsAsync("User"))
                 {
-                    
                     var userRole = new IdentityRole("User");
                     await roleManager.CreateAsync(userRole);
                 }
             }
-
             await host.RunAsync();
         }
 
@@ -43,6 +41,8 @@ namespace BallanceRecordApi
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    // webBuilder.UseUrls("https://*:5001", "http://*:5000");
+                    webBuilder.UseUrls("https://*:5001", "http://*:5000");
                 });
     }
 }

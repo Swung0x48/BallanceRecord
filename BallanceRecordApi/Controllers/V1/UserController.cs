@@ -77,6 +77,7 @@ namespace BallanceRecordApi.Controllers.V1
             
             return Ok(new AuthSuccessResponse
             {
+                Username = authResponse.Username,
                 Token = authResponse.Token,
                 RefreshToken = authResponse.RefreshToken
             });
@@ -96,11 +97,14 @@ namespace BallanceRecordApi.Controllers.V1
             
             return Ok(new AuthSuccessResponse
             {
+                Username = authResponse.Username,
                 Token = authResponse.Token,
                 RefreshToken = authResponse.RefreshToken
             });
         }
         
+        
+
         [HttpGet(ApiRoutes.Identity.Confirmation)]
         public async Task<IActionResult> ConfirmEmail([FromQuery] string userId, string token)
         {
@@ -115,6 +119,7 @@ namespace BallanceRecordApi.Controllers.V1
             
             return Ok(new AuthSuccessResponse
             {
+                Username = authResponse.Username,
                 Token = authResponse.Token,
                 RefreshToken = authResponse.RefreshToken
             });

@@ -30,7 +30,7 @@ namespace BallanceRecordApi.IntegrationTest
         {
             // Arrange
             await AuthenticateAsync();
-            var recordCreated = await CreateRecordAsync(new CreateRecordRequest {Name = "Testinggggg"});
+            var recordCreated = await CreateRecordAsync(new CreateRecordRequest {Remark = "Testinggggg"});
 
             // Act
             var response = await TestClient.GetAsync(ApiRoutes.Records.Get.Replace("{recordId}", recordCreated.Id.ToString()));
@@ -39,7 +39,7 @@ namespace BallanceRecordApi.IntegrationTest
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             var returnedRecord = await response.Content.ReadAsAsync<BallanceRecordApi.Domain.Record>();
             returnedRecord.Id.Should().Be(recordCreated.Id);
-            returnedRecord.Name.Should().Be("Testinggggg");
+            returnedRecord.Remark.Should().Be("Testinggggg");
         }
     }
 }
