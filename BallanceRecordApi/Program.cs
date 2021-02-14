@@ -29,7 +29,6 @@ namespace BallanceRecordApi
 
                 if (!await roleManager.RoleExistsAsync("User"))
                 {
-                    
                     var userRole = new IdentityRole("User");
                     await roleManager.CreateAsync(userRole);
                 }

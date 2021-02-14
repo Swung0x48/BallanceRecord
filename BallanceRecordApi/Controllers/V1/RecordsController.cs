@@ -72,7 +72,7 @@ namespace BallanceRecordApi.Controllers.V1
             }
 
             var record = await _recordService.GetRecordByIdAsync(recordId);
-            record.Name = request.Name;
+            record.Remark = request.Remark;
 
             var updated = await _recordService.UpdateRecordAsync(record);
 
@@ -125,7 +125,7 @@ namespace BallanceRecordApi.Controllers.V1
         {
             var record = new Record
             {
-                Name = recordRequest.Name,
+                Remark = recordRequest.Remark,
                 UserId = HttpContext.GetUserId(),
                 MapHash = recordRequest.MapHash,
                 Score = recordRequest.Score,

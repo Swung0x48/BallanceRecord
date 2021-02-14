@@ -14,7 +14,7 @@ namespace BallanceRecordApi.Services
         {
             _emailOptions = emailOptions;
         }
-        
+
         public async Task SendAsync(string to, string subject, string html)
         {
             // create message
