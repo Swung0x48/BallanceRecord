@@ -22,12 +22,15 @@ private:
 	char BRC_VERSION[50];
 
 	std::mutex mtx_;
-	bool _isOffline = true;
-	bool _isFirstDisplay = true;
+	std::mutex login_mtx_;
+	bool is_offline_ = true;
+	bool is_cold_boot = true;
+	bool need_login_ = true;
+	std::condition_variable login_signal_;
 	std::string _mapHash;
-	IProperty* _props[2];
+	IProperty* props_[2];
 	std::unordered_map<std::string, std::future<bool>> future_;
-	Services* _services = nullptr;
+	Services* services_ = nullptr;
 	Timer* timer_ = nullptr;
 	BGui::Gui* gui_ = nullptr;
 public:

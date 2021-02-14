@@ -1,7 +1,6 @@
 #include "Services.h"
 #include <fstream>
 #include <filesystem>
-#include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 
 Services::Services(const std::string& remoteAddress, const std::string& refreshToken):
@@ -35,6 +34,7 @@ std::string Services::Login()
 
 	if (rawResponse.status_code != 200) return "";
 	
+	std::unique_lock<std::mutex> lk(mtx_);
 	nlohmann::json response = nlohmann::json::parse(rawResponse.text);
 	this->_username = response["username"];
 	this->_jwt = response["token"];
@@ -42,7 +42,7 @@ std::string Services::Login()
 	return this->_refreshToken;
 }
 
-bool Services::UploadRecord(std::string remark, int score, double time, std::string mapHash)
+std::future<cpr::Response> Services::UploadRecord(std::string remark, int score, double time, std::string mapHash)
 {
 	nlohmann::json request;
 	request["remark"] = remark;
@@ -55,28 +55,11 @@ bool Services::UploadRecord(std::string remark, int score, double time, std::str
 			{ "Authorization", "bearer " + this->_jwt }
 	};
 	cpr::Body body = request.dump();
-
-	/*auto hasSucceeded = cpr::PostCallback([&](cpr::Response r) {
-		bool ret = true;
-		if (r.status_code == 401) {
-			ret = false;
-			Login();
-			cpr::PostCallback([&](cpr::Response r) {
-				if (r.status_code == 201) {
-					ret = true;
-					return;
-				}
-				ret = false;
-			}, url, header, body);
-		}
-		return ret;
-	}, url, header, body);
-	return hasSucceeded;*/
 	auto timeout = cpr::Timeout{ 5000 };
 	
-	cpr::Response rawResponse = Post(url, header, body, timeout);
+	return PostAsync(url, header, body, timeout);
 
-	if (rawResponse.status_code == 401)
+	/*if (rawResponse.status_code == 401)
 	{
 		Login();
 		cpr::Header header = {
@@ -89,5 +72,5 @@ bool Services::UploadRecord(std::string remark, int score, double time, std::str
 	}
 	
 	if (rawResponse.status_code == 201) return true;
-	return false;
+	return false;*/
 }
