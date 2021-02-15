@@ -27,6 +27,7 @@ private:
 	bool is_cold_boot = true;
 	bool need_login_ = true;
 	std::condition_variable login_signal_;
+	std::condition_variable upload_signal_;
 	std::string _mapHash;
 	IProperty* props_[2];
 	std::unordered_map<std::string, std::future<bool>> future_;

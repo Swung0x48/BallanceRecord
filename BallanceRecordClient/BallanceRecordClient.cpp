@@ -15,17 +15,21 @@ IMod* BMLEntry(IBML* bml) {
 
 void BallanceRecordClient::OnPreStartMenu()
 {
-	GetLogger()->Info("Login requested.");
 	GetLogger()->Info("Waiting login thread to finish...");
 	mtx_.lock(); mtx_.unlock();
+	GetLogger()->Info("...OK");
+
 	GetLogger()->Info("Checking if a valid token is present...");
 
 	if (this->is_cold_boot) {
 		this->is_cold_boot = false;
 
-		if (this->is_offline_)
+		if (this->is_offline_) {
+			GetLogger()->Warn("...No valid token is present");
 			m_bml->SendIngameMessage("An error occurred while logging in. Now running in offline mode.");
+		}
 		else {
+			GetLogger()->Info("...OK");
 			std::stringstream ss;
 			ss << "Welcome back, " << this->services_->GetUsername() << '.';
 			m_bml->SendIngameMessage(ss.str().c_str());
@@ -57,6 +61,7 @@ void BallanceRecordClient::OnLoad()
 				GetLogger()->Warn("Login failed");
 			}
 			need_login_ = false;
+			lock.unlock();
 
 			while (!need_login_) {
 				login_signal_.wait(lock);
@@ -141,12 +146,6 @@ void BallanceRecordClient::OnProcess()
 	if (m_bml->IsIngame() && !this->is_offline_)
 		timer_->Process();
 
-	if (!is_offline_ && future_["upload"].valid() && future_["upload"].wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-		if (future_["upload"].get())
-			m_bml->SendIngameMessage("Record uploaded successfully.");
-		else
-			m_bml->SendIngameMessage("An error occurred while uploading.");
-	}
 }
 
 void BallanceRecordClient::OnPreEndLevel()
@@ -172,7 +171,8 @@ void BallanceRecordClient::OnPreEndLevel()
 	}
 	
 	char buffer[50];
-	sprintf(buffer, "%lf", timer_->GetTime() / 1000.0);
+	auto elapsed_time = timer_->GetTime() / 1000.0;
+	sprintf(buffer, "%lf", elapsed_time);
 	m_bml->SendIngameMessage(buffer);
 
 	m_bml->SendIngameMessage("Uploading result...");
@@ -181,26 +181,45 @@ void BallanceRecordClient::OnPreEndLevel()
 	// 	_services->UploadRecord("Empty.", score, timer_->GetTime() / 1000.0, this->_mapHash);
 	// });
 
-	auto uploadLambda = [&]() {
-		auto response = this->services_->UploadRecord("Empty.", score, timer_->GetTime() / 1000.0, this->_mapHash);
-		if (response.get().status_code == 201) {
-			m_bml->SendIngameMessage("Record uploaded successfully.");
-			return true;
-		}
-		else return false;
-
-	};
 	future_["upload"] = std::async(std::launch::async,
 		[&] { 
-			if (uploadLambda())
+			std::unique_lock<std::mutex> lock(mtx_);
+			auto response = this->services_->UploadRecord("Empty.", score, elapsed_time, this->_mapHash);
+			if (response.get().status_code == 201) {
+				lock.unlock();
+				upload_signal_.notify_all();
 				return true;
+			}
 			else {
-				login_signal_.notify_all();
-				login_mtx_.lock(); login_mtx_.unlock();
-				return uploadLambda();
+				need_login_ = true;
+				login_signal_.notify_all(); // wake up login thread.
+				std::unique_lock<std::mutex> login_lock(login_mtx_); // wait for login thread to complete.
+				auto response = this->services_->UploadRecord("Empty.", score, elapsed_time, this->_mapHash); // retry upload after a re-login.
+				if (response.get().status_code == 201) {
+					lock.unlock();
+					login_lock.unlock();
+					upload_signal_.notify_all();
+					return true;
+				}
 			}
 			return false;
 	});
+
+	auto check_thread = std::thread([&]() {
+		while (true) {
+			std::unique_lock<std::mutex> lock(mtx_);
+			while (is_offline_ || !future_["upload"].valid() || future_["upload"].wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+				upload_signal_.wait(lock);
+			}
+
+			if (future_["upload"].get())
+				m_bml->SendIngameMessage("Record uploaded successfully.");
+			else
+				m_bml->SendIngameMessage("An error occurred while uploading.");
+		}
+	});
+	check_thread.detach();
+
 	timer_->Reset();
 }
 
