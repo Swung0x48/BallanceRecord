@@ -9,7 +9,7 @@
 
 constexpr int BRC_MAJOR_VER = 0;
 constexpr int BRC_MINOR_VER = 4;
-constexpr int BRC_PATCH_VER = 0;
+constexpr int BRC_PATCH_VER = 1;
 //constexpr char BRC_VERSION[] = { BRC_MAJOR_VER + '0', '.', BRC_MINOR_VER + '0', '.', BRC_PATCH_VER + '0' };
 
 extern "C" {
