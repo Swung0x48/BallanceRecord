@@ -23,6 +23,7 @@ private:
 
 	std::mutex mtx_;
 	std::mutex login_mtx_;
+	std::mutex upload_mtx_;
 	bool is_offline_ = true;
 	bool is_cold_boot = true;
 	bool need_login_ = true;

@@ -15,17 +15,17 @@ IMod* BMLEntry(IBML* bml) {
 
 void BallanceRecordClient::OnPreStartMenu()
 {
-	need_login_ = true;
-	login_signal_.notify_all();
-	GetLogger()->Info("Login requested...");
-	GetLogger()->Info("Waiting login thread to finish...");
-	std::unique_lock<std::mutex> lock(mtx_);
-	GetLogger()->Info("...OK");
-
-	GetLogger()->Info("Checking if a valid token is present...");
-
 	if (this->is_cold_boot) {
 		this->is_cold_boot = false;
+
+		need_login_ = true;
+		login_signal_.notify_all();
+		GetLogger()->Info("Login requested...");
+		GetLogger()->Info("Waiting login thread to finish...");
+		std::unique_lock<std::mutex> lock(login_mtx_);
+		GetLogger()->Info("...OK");
+
+		GetLogger()->Info("Checking if a valid token is present...");
 
 		if (this->is_offline_) {
 			GetLogger()->Warn("...No valid token is present");
@@ -49,13 +49,13 @@ void BallanceRecordClient::OnLoad()
 
 	std::thread login_thread = std::thread([&]() {
 		while (true) {
-			std::unique_lock<std::mutex> lock(login_mtx_);
+			std::unique_lock<std::mutex> lk(login_mtx_);
 			while (!need_login_) {
-				login_signal_.wait(lock);
+				login_signal_.wait(lk);
 			}
 			GetLogger()->Info("Attempting to login...");
 			std::string new_token = services_->Login();
-
+			std::this_thread::sleep_for(std::chrono::seconds(20)); //TODO: Testing purpose. Remove in production.
 			if (!new_token.empty()) {
 				this->is_offline_ = false;
 				props_[1]->SetString(new_token.c_str());
@@ -112,7 +112,7 @@ void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING 
 			return false;
 
 		std::string mapHash = Utils::Hash(fs);
-		std::unique_lock<std::mutex> lock(mtx_);
+		std::scoped_lock<std::mutex> lock(mtx_);
 		_mapHash = mapHash;
 		return true;
 	};
@@ -143,7 +143,7 @@ void BallanceRecordClient::OnStartLevel()
 
 void BallanceRecordClient::OnProcess() 
 {
-	if (m_bml->IsIngame() && !this->is_offline_)
+	if (!this->is_offline_ && m_bml->IsIngame())
 		timer_->Process();
 
 }
@@ -183,20 +183,20 @@ void BallanceRecordClient::OnPreEndLevel()
 
 	future_["upload"] = std::async(std::launch::async,
 		[&] { 
-			std::unique_lock<std::mutex> lock(mtx_);
-			auto response = this->services_->UploadRecord("Empty.", score, elapsed_time, this->_mapHash);
+			std::unique_lock<std::mutex> upload_lock(upload_mtx_);
+
+			auto response = this->services_->UploadRecord("<Empty>", score, elapsed_time, this->_mapHash);
 			if (response.get().status_code == 201) {
-				lock.unlock();
+				upload_lock.unlock();
 				upload_signal_.notify_all();
 				return true;
 			}
 			else {
 				need_login_ = true;
 				login_signal_.notify_all(); // wake up login thread.
-				std::lock_guard<std::mutex> login_lock(login_mtx_); // wait for login thread to complete.
-				auto response = this->services_->UploadRecord("Empty.", score, elapsed_time, this->_mapHash); // retry upload after a re-login.
+				std::unique_lock<std::mutex> login_lock(login_mtx_); // wait for login thread to complete.
+				auto response = this->services_->UploadRecord("<Empty>", score, elapsed_time, this->_mapHash); // retry upload after a re-login.
 				if (response.get().status_code == 201) {
-					lock.unlock();
 					upload_signal_.notify_all();
 					return true;
 				}
@@ -206,9 +206,9 @@ void BallanceRecordClient::OnPreEndLevel()
 
 	auto check_thread = std::thread([&]() {
 		while (true) {
-			std::unique_lock<std::mutex> lock(mtx_);
+			std::unique_lock<std::mutex> upload_lock(upload_mtx_);
 			while (is_offline_ || !future_["upload"].valid() || future_["upload"].wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
-				upload_signal_.wait(lock);
+				upload_signal_.wait(upload_lock);
 			}
 
 			if (future_["upload"].get())
