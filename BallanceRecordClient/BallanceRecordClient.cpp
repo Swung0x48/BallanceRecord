@@ -55,7 +55,7 @@ void BallanceRecordClient::OnLoad()
 			}
 			GetLogger()->Info("Attempting to login...");
 			std::string new_token = services_->Login();
-			std::this_thread::sleep_for(std::chrono::seconds(20)); //TODO: Testing purpose. Remove in production.
+			//std::this_thread::sleep_for(std::chrono::seconds(5)); //TODO: Testing purpose. Remove in production.
 			if (!new_token.empty()) {
 				this->is_offline_ = false;
 				props_[1]->SetString(new_token.c_str());
@@ -66,6 +66,7 @@ void BallanceRecordClient::OnLoad()
 				GetLogger()->Warn("Login failed");
 			}
 			need_login_ = false;
+			upload_signal_.notify_all();
 		}
 	});
 	login_thread.detach();
@@ -182,22 +183,28 @@ void BallanceRecordClient::OnPreEndLevel()
 	// });
 
 	future_["upload"] = std::async(std::launch::async,
-		[&] { 
+		[&, score, elapsed_time] { 
 			std::unique_lock<std::mutex> upload_lock(upload_mtx_);
-
+			std::unique_lock<std::mutex> login_lock(login_mtx_);
 			auto response = this->services_->UploadRecord("<Empty>", score, elapsed_time, this->_mapHash);
-			if (response.get().status_code == 201) {
+			int status_code = response.get().status_code;
+			GetLogger()->Info("HTTP status: %d", status_code);
+			if (status_code == 201) {
 				upload_lock.unlock();
-				upload_signal_.notify_all();
+				check_signal_.notify_all();
 				return true;
 			}
 			else {
 				need_login_ = true;
 				login_signal_.notify_all(); // wake up login thread.
-				std::unique_lock<std::mutex> login_lock(login_mtx_); // wait for login thread to complete.
+				while (need_login_) { // wait for login thread to complete.
+					upload_signal_.wait(login_lock);
+				}
 				auto response = this->services_->UploadRecord("<Empty>", score, elapsed_time, this->_mapHash); // retry upload after a re-login.
-				if (response.get().status_code == 201) {
-					upload_signal_.notify_all();
+				status_code = response.get().status_code;
+				GetLogger()->Info("HTTP status: %d", status_code);
+				if (status_code == 201) {
+					check_signal_.notify_all();
 					return true;
 				}
 			}
@@ -208,7 +215,7 @@ void BallanceRecordClient::OnPreEndLevel()
 		while (true) {
 			std::unique_lock<std::mutex> upload_lock(upload_mtx_);
 			while (is_offline_ || !future_["upload"].valid() || future_["upload"].wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
-				upload_signal_.wait(upload_lock);
+				check_signal_.wait(upload_lock);
 			}
 
 			if (future_["upload"].get())
