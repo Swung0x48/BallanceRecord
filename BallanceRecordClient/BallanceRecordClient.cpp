@@ -15,14 +15,26 @@ IMod* BMLEntry(IBML* bml) {
 
 void BallanceRecordClient::OnPreStartMenu()
 {
-	if (this->_isFirstDisplay) {
-		this->_isFirstDisplay = false;
+	if (this->is_cold_boot) {
+		this->is_cold_boot = false;
 
-		if (this->_isOffline)
+		need_login_ = true;
+		login_signal_.notify_all();
+		GetLogger()->Info("Login requested...");
+		GetLogger()->Info("Waiting login thread to finish...");
+		std::unique_lock<std::mutex> lock(login_mtx_);
+		GetLogger()->Info("...OK");
+
+		GetLogger()->Info("Checking if a valid token is present...");
+
+		if (this->is_offline_) {
+			GetLogger()->Warn("...No valid token is present");
 			m_bml->SendIngameMessage("An error occurred while logging in. Now running in offline mode.");
+		}
 		else {
+			GetLogger()->Info("...OK");
 			std::stringstream ss;
-			ss << "Welcome back, " << this->_services->GetUsername() << '.';
+			ss << "Welcome back, " << this->services_->GetUsername() << '.';
 			m_bml->SendIngameMessage(ss.str().c_str());
 		}
 	}
@@ -30,47 +42,64 @@ void BallanceRecordClient::OnPreStartMenu()
 
 void BallanceRecordClient::OnLoad()
 {
+	GetLogger()->Info("Initializing BallanceRecordClient...");
 	// Init config entries
-	_services = Services::Create(GetConfig(), this->_props);
+	GetLogger()->Info("Reading config...");
+	services_ = Services::Create(GetConfig(), this->props_);
 
-	std::string newToken = _services->Login();
-	if (newToken.empty())
-	{
-		this->_isOffline = true;
-		return;
-	}
-	this->_isOffline = false;
-	_props[1]->SetString(newToken.c_str());
+	std::thread login_thread = std::thread([&]() {
+		while (true) {
+			std::unique_lock<std::mutex> lk(login_mtx_);
+			while (!need_login_) {
+				login_signal_.wait(lk);
+			}
+			GetLogger()->Info("Attempting to login...");
+			std::string new_token = services_->Login();
+			//std::this_thread::sleep_for(std::chrono::seconds(5)); //TODO: Testing purpose. Remove in production.
+			if (!new_token.empty()) {
+				this->is_offline_ = false;
+				props_[1]->SetString(new_token.c_str());
+				GetLogger()->Info("Logged in successfully.");
+			}
+			else {
+				this->is_offline_ = true;
+				GetLogger()->Warn("Login failed");
+			}
+			need_login_ = false;
+			upload_signal_.notify_all();
+		}
+	});
+	login_thread.detach();
 }
 
 void BallanceRecordClient::OnCounterActive()
 {
-	if (!this->_isOffline)
+	if (!this->is_offline_)
 		this->timer_->Start();
 }
 
 void BallanceRecordClient::OnCounterInactive()
 {
-	if (!this->_isOffline)
+	if (!this->is_offline_)
 		this->timer_->Stop();
 }
 
 void BallanceRecordClient::OnPauseLevel()
 {
-	if (!this->_isOffline)
+	if (!this->is_offline_)
 		this->timer_->Stop();
 }
 
 void BallanceRecordClient::OnUnpauseLevel()
 {
-	if (!this->_isOffline)
+	if (!this->is_offline_)
 		this->timer_->Start();
 }
 
 void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING masterName,
 	CK_CLASSID filterClass, BOOL addtoscene, BOOL reuseMeshes, BOOL reuseMaterials,
 	BOOL dynamic, XObjectArray* objArray, CKObject* masterObj) {
-	if (this->_isOffline) return;
+	if (this->is_offline_) return;
 	if (!isMap) return;
 
 	timer_ = new Timer(m_bml->GetTimeManager());
@@ -84,9 +113,8 @@ void BallanceRecordClient::OnLoadObject(CKSTRING filename, BOOL isMap, CKSTRING 
 			return false;
 
 		std::string mapHash = Utils::Hash(fs);
-		// mtx_.lock();
+		std::scoped_lock<std::mutex> lock(mtx_);
 		_mapHash = mapHash;
-		// mtx_.unlock();
 		return true;
 	};
 
@@ -108,7 +136,7 @@ void BallanceRecordClient::OnStartLevel()
 	else
 		m_bml->SendIngameMessage(_mapHash.c_str());
 
-	if (!this->_isOffline) {
+	if (!this->is_offline_) { // Timer is not available in offline mode.
 		timer_->Reset();
 		timer_->Stop();
 	}
@@ -116,16 +144,22 @@ void BallanceRecordClient::OnStartLevel()
 
 void BallanceRecordClient::OnProcess() 
 {
-	if (m_bml->IsIngame() && !this->_isOffline)
+	if (!this->is_offline_ && m_bml->IsIngame())
 		timer_->Process();
+	if (m_bml->IsCheatEnabled())
+		has_cheated_ = true;
 }
 
 void BallanceRecordClient::OnPreEndLevel()
 {
-	if (this->_isOffline) return;
-
+	if (this->is_offline_) return;
 	timer_->Stop();
 	
+	if (has_cheated_) {
+		m_bml->SendIngameMessage("Cheating detected. Will discard this record.");
+		return;
+	}
+
 	int points, lifes, lifebouns, currentLevelNumber, levelBonus;
 	m_bml->GetArrayByName("Energy")->GetElementValue(0, 0, &points);
 	m_bml->GetArrayByName("Energy")->GetElementValue(0, 1, &lifes);
@@ -143,7 +177,8 @@ void BallanceRecordClient::OnPreEndLevel()
 	}
 	
 	char buffer[50];
-	sprintf(buffer, "%lf", timer_->GetTime() / 1000.0);
+	auto elapsed_time = timer_->GetTime() / 1000.0;
+	sprintf(buffer, "%lf", elapsed_time);
 	m_bml->SendIngameMessage(buffer);
 
 	m_bml->SendIngameMessage("Uploading result...");
@@ -151,28 +186,60 @@ void BallanceRecordClient::OnPreEndLevel()
 	// thread_["upload"] = std::thread([&]() {
 	// 	_services->UploadRecord("Empty.", score, timer_->GetTime() / 1000.0, this->_mapHash);
 	// });
-	future_["upload"] = std::async(
-		std::launch::async, 
-		&Services::UploadRecord, 
-		this->_services, 
-		"Empty.", 
-		score, 
-		timer_->GetTime() / 1000.0, 
-		this->_mapHash
-	);
+
+	future_["upload"] = std::async(std::launch::async,
+		[&, score, elapsed_time] { 
+			std::unique_lock<std::mutex> upload_lock(upload_mtx_);
+			std::unique_lock<std::mutex> login_lock(login_mtx_);
+			auto response = this->services_->UploadRecord("<Empty>", score, elapsed_time, this->_mapHash);
+			int status_code = response.get().status_code;
+			GetLogger()->Info("HTTP status: %d", status_code);
+			if (status_code == 201) {
+				upload_lock.unlock();
+				check_signal_.notify_all();
+				return true;
+			}
+			else {
+				need_login_ = true;
+				login_signal_.notify_all(); // wake up login thread.
+				while (need_login_) { // wait for login thread to complete.
+					upload_signal_.wait(login_lock);
+				}
+				auto response = this->services_->UploadRecord("<Empty>", score, elapsed_time, this->_mapHash); // retry upload after a re-login.
+				status_code = response.get().status_code;
+				GetLogger()->Info("HTTP status: %d", status_code);
+				if (status_code == 201) {
+					check_signal_.notify_all();
+					return true;
+				}
+			}
+			return false;
+	});
+
+	auto check_thread = std::thread([&]() {
+		while (true) {
+			std::unique_lock<std::mutex> upload_lock(upload_mtx_);
+			while (is_offline_ || !future_["upload"].valid() || future_["upload"].wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+				check_signal_.wait(upload_lock);
+			}
+
+			if (future_["upload"].get())
+				m_bml->SendIngameMessage("Record uploaded successfully.");
+			else
+				m_bml->SendIngameMessage("An error occurred while uploading.");
+		}
+	});
+	check_thread.detach();
+
 	timer_->Reset();
 }
 
 void BallanceRecordClient::OnPostEndLevel()
 {
-	if (future_["upload"].wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-		m_bml->SendIngameMessage("Record uploaded successfully.");
-	} else {
-		m_bml->SendIngameMessage("An error occurred while uploading.");
-	}
+	
 }
 
 void BallanceRecordClient::OnUnload()
 {
-	this->_props[1]->SetString(this->_services->GetApiKey().c_str());
+	this->props_[1]->SetString(this->services_->GetApiKey().c_str());
 }
