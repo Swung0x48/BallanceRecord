@@ -8,8 +8,8 @@
 #include "Timer.h"
 
 constexpr int BRC_MAJOR_VER = 0;
-constexpr int BRC_MINOR_VER = 3;
-constexpr int BRC_PATCH_VER = 1;
+constexpr int BRC_MINOR_VER = 4;
+constexpr int BRC_PATCH_VER = 0;
 //constexpr char BRC_VERSION[] = { BRC_MAJOR_VER + '0', '.', BRC_MINOR_VER + '0', '.', BRC_PATCH_VER + '0' };
 
 extern "C" {
@@ -27,6 +27,7 @@ private:
 	bool is_offline_ = true;
 	bool is_cold_boot = true;
 	bool need_login_ = true;
+	bool has_cheated_ = true;
 	std::condition_variable login_signal_;
 	std::condition_variable upload_signal_;
 	std::condition_variable check_signal_;

@@ -146,15 +146,20 @@ void BallanceRecordClient::OnProcess()
 {
 	if (!this->is_offline_ && m_bml->IsIngame())
 		timer_->Process();
-
+	if (m_bml->IsCheatEnabled())
+		has_cheated_ = true;
 }
 
 void BallanceRecordClient::OnPreEndLevel()
 {
 	if (this->is_offline_) return;
-
 	timer_->Stop();
 	
+	if (has_cheated_) {
+		m_bml->SendIngameMessage("Cheating detected. Will discard this record.");
+		return;
+	}
+
 	int points, lifes, lifebouns, currentLevelNumber, levelBonus;
 	m_bml->GetArrayByName("Energy")->GetElementValue(0, 0, &points);
 	m_bml->GetArrayByName("Energy")->GetElementValue(0, 1, &lifes);
