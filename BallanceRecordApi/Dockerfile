@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0 as build
+FROM mcr.microsoft.com/dotnet/sdk:5.0-alpine as build
 
 ARG BUILDCONFIG=RELEASE
 ARG VERSION=1.0.0

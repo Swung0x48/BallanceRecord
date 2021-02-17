@@ -8,32 +8,40 @@ services:
   main-api:
     build: BallanceRecordApi/
     restart: always
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:7000
     ports:
-    - "7000:80"
-    - "7001:443"
+    - "7000:7000"
     depends_on:
       - db-server
-      - redis
+      - cache
     networks:
       - BallanceRecord
       
   db-server:
     image: mysql
+    container_name: db-server
     command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: "temp233"
+      MYSQL_DATABASE: "BallanceRecord"
     ports:
       - "3306:3306"
     networks:
-      - BallanceRecord
+      BallanceRecord:
+        aliases:
+          - db
     volumes:
       - db_data:/var/lib/mysql
   
-  redis:
+  cache:
     image: redis
-    container_name: redis
+    container_name: cache
+    networks:
+      - BallanceRecord
     ports:
-    - "6379:6379"
+      - "6379:6379"
 
 volumes:
   db_data: {}

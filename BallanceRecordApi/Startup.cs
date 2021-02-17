@@ -37,10 +37,10 @@ namespace BallanceRecordApi
             {
                 app.UseDeveloperExceptionPage();
             }
-            else
+            /*else
             {
                 app.UseHsts();
-            }
+            }*/
 
             app.UseCors(builder => builder
                 .AllowAnyOrigin()

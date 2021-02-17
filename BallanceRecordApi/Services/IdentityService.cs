@@ -311,7 +311,7 @@ namespace BallanceRecordApi.Services
                 SigningCredentials =
                     new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
-
+            
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var refreshToken = new RefreshToken
             {
