@@ -12,7 +12,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:7000
     ports:
-    - "7000:7000"
+    - "6000:6000"
     depends_on:
       - db-server
       - cache
