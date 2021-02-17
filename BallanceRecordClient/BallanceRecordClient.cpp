@@ -70,6 +70,21 @@ void BallanceRecordClient::OnLoad()
 		}
 	});
 	login_thread.detach();
+
+	auto check_thread = std::thread([&]() {
+		while (true) {
+			std::unique_lock<std::mutex> upload_lock(upload_mtx_);
+			while (is_offline_ || !future_["upload"].valid() || future_["upload"].wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+				check_signal_.wait(upload_lock);
+			}
+
+			if (future_["upload"].get())
+				m_bml->SendIngameMessage("Record uploaded successfully.");
+			else
+				m_bml->SendIngameMessage("An error occurred while uploading.");
+		}
+	});
+	check_thread.detach();
 }
 
 void BallanceRecordClient::OnCounterActive()
@@ -140,13 +155,16 @@ void BallanceRecordClient::OnStartLevel()
 		timer_->Reset();
 		timer_->Stop();
 	}
+	has_cheated_ = false;
 }
 
 void BallanceRecordClient::OnProcess() 
 {
+	if (has_cheated_) return;
+
 	if (!this->is_offline_ && m_bml->IsIngame())
 		timer_->Process();
-	if (m_bml->IsCheatEnabled())
+	if (m_bml->IsIngame() && m_bml->IsCheatEnabled())
 		has_cheated_ = true;
 }
 
@@ -157,6 +175,7 @@ void BallanceRecordClient::OnPreEndLevel()
 	
 	if (has_cheated_) {
 		m_bml->SendIngameMessage("Cheating detected. Will discard this record.");
+		has_cheated_ = false;
 		return;
 	}
 
@@ -215,21 +234,6 @@ void BallanceRecordClient::OnPreEndLevel()
 			}
 			return false;
 	});
-
-	auto check_thread = std::thread([&]() {
-		while (true) {
-			std::unique_lock<std::mutex> upload_lock(upload_mtx_);
-			while (is_offline_ || !future_["upload"].valid() || future_["upload"].wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
-				check_signal_.wait(upload_lock);
-			}
-
-			if (future_["upload"].get())
-				m_bml->SendIngameMessage("Record uploaded successfully.");
-			else
-				m_bml->SendIngameMessage("An error occurred while uploading.");
-		}
-	});
-	check_thread.detach();
 
 	timer_->Reset();
 }
