@@ -51,7 +51,7 @@ namespace BallanceRecordApi.Cache
             if (executedContext.Result is OkObjectResult okObjectResult)
             {
                 await cacheService.CacheResponseAsync(cacheKey, okObjectResult.Value,
-                    TimeSpan.FromMinutes(_timeToLiveSeconds));
+                    TimeSpan.FromSeconds(_timeToLiveSeconds));
             }
             
             // Get the value
