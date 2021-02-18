@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BallanceRecordApi.Contracts.V1;
@@ -40,27 +41,57 @@ namespace BallanceRecordApi.Controllers.V1
                     Errors = authResponse.Messages
                 });
             }
-
-            var rawHtml = await System.IO.File.ReadAllTextAsync("Static/EmailContent.html");
-            // var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-            // var locationUri = $"{baseUrl}/{ApiRoutes.Identity.Confirmation}" +
-            //                   $"?userid={Uri.EscapeDataString(authResponse.Messages.ToArray()[1])}" +
-            //                   $"&token={Uri.EscapeDataString(authResponse.Messages.ToArray()[2])}";
-
+            
             var locationUri = _uriService.GetUserConfirmationUri(
                 authResponse.Messages.ToArray()[1],
                 authResponse.Messages.ToArray()[2]
-                );
-            var emailContent = rawHtml.Replace("{link}", locationUri.ToString());
-            await _emailService.SendAsync(request.Email, "Ballance Register Confirmation Email", emailContent);
-            
-            return Unauthorized(new AuthFailResponse
+            );
+
+            try
             {
-                Errors = new []
+                var rawHtml = await System.IO.File.ReadAllTextAsync("Static/EmailContent.html");
+                // var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
+                // var locationUri = $"{baseUrl}/{ApiRoutes.Identity.Confirmation}" +
+                //                   $"?userid={Uri.EscapeDataString(authResponse.Messages.ToArray()[1])}" +
+                //                   $"&token={Uri.EscapeDataString(authResponse.Messages.ToArray()[2])}";
+                var emailContent = rawHtml.Replace("{link}", locationUri.ToString());
+                await _emailService.SendAsync(request.Email, "Ballance Register Confirmation Email", emailContent);
+                return Unauthorized(new AuthFailResponse
                 {
-                    authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x))
-                }
-            });
+                    Errors = new[]
+                    {
+                        authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x))
+                    }
+                });
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine("Email content not found.");
+                Console.WriteLine(e.Message);
+                return Unauthorized(new AuthFailResponse
+                {
+                    Errors = new[]
+                    {
+                        authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x)),
+                        "Server has encountered a bug: Email content not found. Please contact admin.",
+                        locationUri.ToString()
+                    }
+                });
+            }
+            catch (MailKit.Security.AuthenticationException ex)
+            {
+                Console.WriteLine("Server cannot connect to mail service.");
+                Console.WriteLine(ex.Message);
+                return Unauthorized(new AuthFailResponse
+                {
+                    Errors = new[]
+                    {
+                        authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x)),
+                        "Server has encountered a bug: Server cannot connect to mail service.. Please contact admin.",
+                        locationUri.ToString()
+                    }
+                });
+            }
         }
         
         [HttpPost(ApiRoutes.Identity.Login)]

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using BallanceRecordApi.Filters;
@@ -29,34 +30,42 @@ namespace BallanceRecordApi.Installers
             
             #region JWT Authentication
 
-            var jwtOptions = new JwtOptions();
-            configuration.Bind(nameof(jwtOptions), jwtOptions);
-            services.AddSingleton(jwtOptions);
-
-            services.AddScoped<IIdentityService, IdentityService>();
-
-            var tokenValidationParameters = new TokenValidationParameters
+            try
             {
-                ValidateIssuer = false,
-                ValidateIssuerSigningKey = false,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.Secret)),
-                ValidateAudience = false,
-                RequireExpirationTime = true,
-                ValidateLifetime = true
-            };
-            services.AddSingleton(tokenValidationParameters);
-            
-            services.AddAuthentication(x =>
+                var jwtOptions = new JwtOptions();
+                configuration.Bind(nameof(jwtOptions), jwtOptions);
+                services.AddSingleton(jwtOptions);
+
+                services.AddScoped<IIdentityService, IdentityService>();
+
+                var tokenValidationParameters = new TokenValidationParameters
                 {
-                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddJwtBearer(x =>
-                {
-                    x.SaveToken = true;
-                    x.TokenValidationParameters = tokenValidationParameters;
-                });
+                    ValidateIssuer = false,
+                    ValidateIssuerSigningKey = false,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtOptions.Secret)),
+                    ValidateAudience = false,
+                    RequireExpirationTime = true,
+                    ValidateLifetime = true
+                };
+                services.AddSingleton(tokenValidationParameters);
+
+                services.AddAuthentication(x =>
+                    {
+                        x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                        x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                        x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    })
+                    .AddJwtBearer(x =>
+                    {
+                        x.SaveToken = true;
+                        x.TokenValidationParameters = tokenValidationParameters;
+                    });
+            }
+            catch (ArgumentNullException e)
+            {
+                Console.WriteLine($"Cannot retrieve parameter {e.ParamName}. Maybe forgot to create an appsettings.json?");
+                Environment.Exit(1);
+            }
 
             #endregion
 
