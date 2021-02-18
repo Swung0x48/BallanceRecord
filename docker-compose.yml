@@ -34,7 +34,8 @@ services:
         aliases:
           - db
     volumes:
-      - db_data:/var/lib/mysql
+      #- db_data:/var/lib/mysql
+      - ./mysqldata:/var/lib/mysql:rw,delegated
   
   cache:
     image: redis
