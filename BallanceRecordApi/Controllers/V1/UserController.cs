@@ -64,7 +64,7 @@ namespace BallanceRecordApi.Controllers.V1
                     }
                 });
             }
-            catch (FileNotFoundException e)
+            catch (IOException e)
             {
                 Console.WriteLine("Email content not found.");
                 Console.WriteLine(e.Message);
