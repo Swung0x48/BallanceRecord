@@ -10,9 +10,9 @@ services:
     restart: always
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:7000
+      - ASPNETCORE_URLS=http://+:5515
     ports:
-    - "6000:6000"
+    - "5515:5515"
     depends_on:
       - db-server
       - cache
@@ -26,6 +26,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "temp233"
       MYSQL_DATABASE: "BallanceRecord"
+      MYSQL_ROOT_HOST: '%'
     ports:
       - "3306:3306"
     networks:
@@ -33,7 +34,8 @@ services:
         aliases:
           - db
     volumes:
-      - db_data:/var/lib/mysql
+      #- db_data:/var/lib/mysql
+      - ./mysqldata:/var/lib/mysql:rw,delegated
   
   cache:
     image: redis
