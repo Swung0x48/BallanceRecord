@@ -46,8 +46,16 @@ namespace BallanceRecordApi.Controllers.V1
                 authResponse.Messages.ToArray()[1],
                 authResponse.Messages.ToArray()[2]
             );
+            return Unauthorized(new AuthFailResponse
+            {
+                Errors = new[]
+                {
+                    authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x)),
+                    $"{locationUri}"
+                }
+            });
 
-            try
+            /*try
             {
                 var rawHtml = await System.IO.File.ReadAllTextAsync("Static/EmailContent.html");
                 // var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
@@ -91,7 +99,7 @@ namespace BallanceRecordApi.Controllers.V1
                         locationUri.ToString()
                     }
                 });
-            }
+            }*/
         }
         
         [HttpPost(ApiRoutes.Identity.Login)]
