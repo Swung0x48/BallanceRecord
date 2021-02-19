@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using BallanceRecordApi.Options;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Newtonsoft.Json;
 
 namespace BallanceRecordApi
@@ -41,7 +42,12 @@ namespace BallanceRecordApi
             {
                 app.UseHsts();
             }*/
-
+            
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedProto
+            });
+            
             app.UseCors(builder => builder
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
