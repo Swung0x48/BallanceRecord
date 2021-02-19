@@ -99,7 +99,7 @@ namespace BallanceRecordApi.Installers
             {
                 var accessor = provider.GetRequiredService<IHttpContextAccessor>();
                 var request = accessor.HttpContext?.Request;
-                var absoluteUri = $"{request?.Scheme}://{request?.Host.ToUriComponent()}/";
+                var absoluteUri = $"{request?.Scheme}://{request?.Host.ToUriComponent()}:{request?.Host.Port}/";
                 return new UriService(absoluteUri);
             });
         }
