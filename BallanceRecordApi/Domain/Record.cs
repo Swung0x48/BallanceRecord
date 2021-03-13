@@ -13,7 +13,9 @@ namespace BallanceRecordApi.Domain
         public string UserId { get; set; }
         public string MapHash { get; set; }
         public int Score { get; set; }
-        public double Time { get; set; }
+        public TimeSpan Duration { get; set; }
+        public DateTime TimeCreated { get; set; }
+        public DateTime TimeModified { get; set; }
         
         [ForeignKey(nameof(UserId))]
         public IdentityUser User { get; set; }

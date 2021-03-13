@@ -32,12 +32,12 @@ namespace BallanceRecordApi.Services
             {
                 PaginationFilter.OrderByType.HighScore => await records
                     .OrderByDescending(x => x.Score)
-                    .ThenBy(xx => xx.Time)
+                    .ThenBy(xx => xx.Duration)
                     .Skip(skipSize)
                     .Take(paginationFilter.PageSize)
                     .ToListAsync(),
                 PaginationFilter.OrderByType.SpeedRun => await records
-                    .OrderBy(xx => xx.Time)
+                    .OrderBy(xx => xx.Duration)
                     .ThenByDescending(x => x.Score)
                     .Skip(skipSize)
                     .Take(paginationFilter.PageSize)

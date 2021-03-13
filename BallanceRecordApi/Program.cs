@@ -15,7 +15,8 @@ namespace BallanceRecordApi
     {
         public static async Task Main(string[] args)
         {
-            var host = CreateHostBuilder(args).Build(); // TODO: Cleanup
+            var host = CreateHostBuilder(args)
+                .Build(); // TODO: Cleanup
 
             using (var serviceScope = host.Services.CreateScope())
             {

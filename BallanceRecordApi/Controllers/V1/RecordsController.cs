@@ -72,7 +72,9 @@ namespace BallanceRecordApi.Controllers.V1
             }
 
             var record = await _recordService.GetRecordByIdAsync(recordId);
+            
             record.Remark = request.Remark;
+            record.TimeModified = DateTime.Now;
 
             var updated = await _recordService.UpdateRecordAsync(record);
 
@@ -129,7 +131,9 @@ namespace BallanceRecordApi.Controllers.V1
                 UserId = HttpContext.GetUserId(),
                 MapHash = recordRequest.MapHash,
                 Score = recordRequest.Score,
-                Time = recordRequest.Time
+                Duration = TimeSpan.FromSeconds(recordRequest.Duration),
+                TimeCreated = DateTime.Now,
+                TimeModified = DateTime.Now
             };
             
             if (record.Id == Guid.Empty)

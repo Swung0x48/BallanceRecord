@@ -9,7 +9,7 @@ namespace BallanceRecordApi.Validators
         {
             RuleFor(x => x.MapHash)
                 .Length(64);
-            RuleFor(x => x.Time)
+            RuleFor(x => x.Duration)
                 .GreaterThanOrEqualTo(0);
         }
     }
