@@ -42,12 +42,12 @@ std::string Services::Login()
 	return this->_refreshToken;
 }
 
-std::future<cpr::Response> Services::UploadRecord(std::string remark, int score, double time, std::string mapHash)
+std::future<cpr::Response> Services::UploadRecord(std::string remark, int score, double duration, std::string mapHash)
 {
 	nlohmann::json request;
 	request["remark"] = remark;
 	request["score"] = score;
-	request["time"] = time;
+	request["duration"] = duration;
 	request["mapHash"] = mapHash;
 	cpr::Url url = this->_remoteAddress + this->RECORDS;
 	cpr::Header header = {
