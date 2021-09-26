@@ -16,6 +16,8 @@ namespace BallanceRecordApi.Domain
         public TimeSpan Duration { get; set; }
         public DateTime TimeCreated { get; set; }
         public DateTime TimeModified { get; set; }
+        public double BallSpeed { get; set; }
+        public bool IsBouncing { get; set; }
         
         [ForeignKey(nameof(UserId))]
         public IdentityUser User { get; set; }
