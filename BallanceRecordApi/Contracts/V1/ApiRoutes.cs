@@ -12,6 +12,8 @@ namespace BallanceRecordApi.Contracts.V1
             public const string Update = Prefix + "/records/{recordId}";
             public const string Delete = Prefix + "/records/{recordId}";
             public const string Create = Prefix + "/records";
+            public const string GetFile = Prefix + "/records/file";
+            public const string PostFile = Prefix + "/records/file";
         }
 
         public static class Identity
