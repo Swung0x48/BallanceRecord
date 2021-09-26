@@ -82,13 +82,15 @@ namespace BallanceRecordApi.Controllers.V1
             return Ok(new Response<RecordResponse>(_mapper.Map<RecordResponse>(record)));
         }
         
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "User")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut(ApiRoutes.Records.Update)]
         public async Task<IActionResult> Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
         {
             var userOwnsPost = await _recordService.UserOwnsRecordAsync(recordId, HttpContext.GetUserId());
+            var userIsAdmin = HttpContext.User.IsInRole("Admin");
+            var userEligibleToUpdate = userOwnsPost || userIsAdmin;
 
-            if (!userOwnsPost)
+            if (!userEligibleToUpdate)
             {
                 return BadRequest(new {error = "You do not own this record."});
             }

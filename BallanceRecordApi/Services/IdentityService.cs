@@ -234,6 +234,11 @@ namespace BallanceRecordApi.Services
             //return await SendEmailAsync(user.Email, user.Id, EmailType.EmailChange, newEmail);
         }
 
+        public async Task<IList<string>> GetRolesAsync(IdentityUser user)
+        {
+            return await _userManager.GetRolesAsync(user);
+        }
+
         public async Task<AuthenticationResult> ResetPasswordAsync(string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
