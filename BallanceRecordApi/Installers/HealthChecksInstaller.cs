@@ -2,6 +2,8 @@ using BallanceRecordApi.Data;
 using BallanceRecordApi.HealthChecks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Minio;
+using Minio.AspNetCore.HealthChecks;
 
 namespace BallanceRecordApi.Installers
 {
@@ -11,7 +13,8 @@ namespace BallanceRecordApi.Installers
         {
             services.AddHealthChecks()
                 .AddDbContextCheck<DataContext>()
-                .AddCheck<RedisHealthCheck>("Redis");
+                .AddCheck<RedisHealthCheck>("Redis")
+                .AddMinio(sp => sp.GetRequiredService<MinioClient>());
         }
     }
 }

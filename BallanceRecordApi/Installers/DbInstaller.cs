@@ -22,8 +22,6 @@ namespace BallanceRecordApi.Installers
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<DataContext>();
             
-            
-            
             services.AddScoped<IRecordService, RecordService>();
         }
     }

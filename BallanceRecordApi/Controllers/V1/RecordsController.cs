@@ -82,7 +82,7 @@ namespace BallanceRecordApi.Controllers.V1
             return Ok(new Response<RecordResponse>(_mapper.Map<RecordResponse>(record)));
         }
         
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "User")]
         [HttpPut(ApiRoutes.Records.Update)]
         public async Task<IActionResult> Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
         {
