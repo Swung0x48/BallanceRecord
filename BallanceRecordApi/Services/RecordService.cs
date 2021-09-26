@@ -27,7 +27,6 @@ namespace BallanceRecordApi.Services
             }
 
             var skipSize = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-
             return paginationFilter.OrderBy switch
             {
                 PaginationFilter.OrderByType.HighScore => await records

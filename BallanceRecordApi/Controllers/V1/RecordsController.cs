@@ -13,7 +13,9 @@ using BallanceRecordApi.Helpers;
 using BallanceRecordApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Swung0x48.Ballance.TdbReader;
 
 namespace BallanceRecordApi.Controllers.V1
 {
@@ -22,12 +24,14 @@ namespace BallanceRecordApi.Controllers.V1
         private readonly IRecordService _recordService;
         private readonly IMapper _mapper;
         private readonly IUriService _uriService;
+        private readonly IObjectStorageService _objectStorageService;
         
-        public RecordsController(IRecordService recordService, IMapper mapper, IUriService uriService)
+        public RecordsController(IRecordService recordService, IMapper mapper, IUriService uriService, IObjectStorageService objectStorageService)
         {
             _recordService = recordService;
             _mapper = mapper;
             _uriService = uriService;
+            _objectStorageService = objectStorageService;
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
@@ -44,8 +48,26 @@ namespace BallanceRecordApi.Controllers.V1
             }
             
             var pagedResponse = PaginationHelpers.CreatePagedResponse(_uriService, pagination, recordResponses);
-            
+
             return Ok(pagedResponse);
+        }
+
+        [HttpGet(ApiRoutes.Records.GetFile)]
+        [Cached(600)]
+        public async Task<IActionResult> GetRecordFile()
+        {
+            // _objectStorageService.ListObjects("test", "Database.tdb").Subscribe(item => Console.WriteLine($"Object: {item.Key}"),
+            //     ex => Console.WriteLine($"OnError: {ex}"),
+            //     () => Console.WriteLine($"Listed all objects in bucket\n"));
+            throw new NotImplementedException();
+        }
+ 
+        [HttpPost(ApiRoutes.Records.PostFile)]
+        public async Task<IActionResult> PostRecordFile(IFormFile file)
+        {
+            Console.WriteLine(file.ContentType);
+            var list = await VirtoolsArray.CreateListAsync(file.OpenReadStream());
+            return Ok(list[0].SheetName);
         }
         
         [HttpGet(ApiRoutes.Records.Get)]
@@ -121,20 +143,26 @@ namespace BallanceRecordApi.Controllers.V1
         //     return NotFound();
         // }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
         [HttpPost(ApiRoutes.Records.Create)]
         public async Task<IActionResult> Create([FromBody] CreateRecordRequest recordRequest)
         {
-            var record = new Record
-            {
-                Remark = recordRequest.Remark,
-                UserId = HttpContext.GetUserId(),
-                MapHash = recordRequest.MapHash,
-                Score = recordRequest.Score,
-                Duration = TimeSpan.FromSeconds(recordRequest.Duration),
-                TimeCreated = DateTime.Now,
-                TimeModified = DateTime.Now
-            };
+            var record = _mapper.Map<Record>(recordRequest);
+            record.UserId = HttpContext.GetUserId();
+            record.TimeCreated = DateTime.Now;
+            record.TimeModified = DateTime.Now;
+            // var record = new Record
+            // {
+            //     Remark = recordRequest.Remark,
+            //     UserId = HttpContext.GetUserId(),
+            //     MapHash = recordRequest.MapHash,
+            //     Score = recordRequest.Score,
+            //     Duration = TimeSpan.FromSeconds(recordRequest.Duration),
+            //     TimeCreated = DateTime.Now,
+            //     TimeModified = DateTime.Now,
+            //     BallSpeed = recordRequest.BallSpeed,
+            //     IsBouncing = recordRequest.IsBouncing
+            // };
             
             if (record.Id == Guid.Empty)
                 record.Id = Guid.NewGuid();

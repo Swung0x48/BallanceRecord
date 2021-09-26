@@ -69,6 +69,9 @@ namespace BallanceRecordApi.Services
                 };
             }
 
+            // await _userManager.AddToRoleAsync(newUser, "Admin");
+            await _userManager.AddToRoleAsync(newUser, "User");
+
             return new AuthenticationResult
             {
                 Success = true,

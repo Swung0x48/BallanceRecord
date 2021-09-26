@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using BallanceRecordApi.Contracts.V1;
@@ -41,7 +40,7 @@ namespace BallanceRecordApi.Controllers.V1
                     Errors = authResponse.Messages
                 });
             }
-            
+
             var locationUri = _uriService.GetUserConfirmationUri(
                 authResponse.Messages.ToArray()[1],
                 authResponse.Messages.ToArray()[2]
