@@ -24,14 +24,13 @@ namespace BallanceRecordApi.Controllers.V1
         private readonly IRecordService _recordService;
         private readonly IMapper _mapper;
         private readonly IUriService _uriService;
-        private readonly IObjectStorageService _objectStorageService;
+        // private readonly IObjectStorageService _objectStorageService;
         
-        public RecordsController(IRecordService recordService, IMapper mapper, IUriService uriService, IObjectStorageService objectStorageService)
+        public RecordsController(IRecordService recordService, IMapper mapper, IUriService uriService)
         {
             _recordService = recordService;
             _mapper = mapper;
             _uriService = uriService;
-            _objectStorageService = objectStorageService;
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
