@@ -13,8 +13,8 @@ namespace BallanceRecordApi.Installers
         {
             services.AddHealthChecks()
                 .AddDbContextCheck<DataContext>()
-                .AddCheck<RedisHealthCheck>("Redis")
-                .AddMinio(sp => sp.GetRequiredService<MinioClient>());
+                .AddCheck<RedisHealthCheck>("Redis");
+            // .AddMinio(sp => sp.GetRequiredService<MinioClient>());
         }
     }
 }

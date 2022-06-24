@@ -20,11 +20,11 @@ namespace BallanceRecordApi.Installers
                 options.Endpoint = minioOptions.Endpoint;
                 options.AccessKey = minioOptions.AccessKey;
                 options.SecretKey = minioOptions.SecretKey;
-                options.OnClientConfiguration = client =>
-                {
-                    if (minioOptions.Ssl)
-                        client.WithSSL();
-                };
+                // options.ConfigureClient = client =>
+                // {
+                //     if (minioOptions.Ssl)
+                //         client.WithSSL();
+                // };
             });
             services.AddScoped<IObjectStorageService, ObjectStorageService>();
         }
