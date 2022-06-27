@@ -1,15 +1,14 @@
 namespace BallanceRecordApi.Domain
 {
-    public class PaginationFilter
+    public enum RecordOrderBy
     {
-        public enum OrderByType
-        {
-            HighScore,
-            SpeedRun
-        }
-        
+        HighScore,
+        SpeedRun
+    }
+    public class PaginationFilter<T>
+    {
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
-        public OrderByType OrderBy { get; set; }
+        public T OrderBy { get; set; }
     }
 }

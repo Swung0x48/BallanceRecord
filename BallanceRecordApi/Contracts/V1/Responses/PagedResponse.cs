@@ -3,19 +3,20 @@ using BallanceRecordApi.Domain;
 
 namespace BallanceRecordApi.Contracts.V1.Responses
 {
-    public class PagedResponse<T>
+    public class PagedResponse<TData, TOrderBy>
     {
         public PagedResponse() {}
 
-        public PagedResponse(IEnumerable<T> data)
+        public PagedResponse(IEnumerable<TData> data)
         {
             Data = data;
         }
 
-        public IEnumerable<T> Data { get; set; }
+        public IEnumerable<TData> Data { get; set; }
         public int? PageNumber { get; set; }
         public int? PageSize { get; set; }
-        public PaginationFilter.OrderByType? OrderBy { get; set; }
+        public int? PageCount { get; set; }
+        public TOrderBy? OrderBy { get; set; }
         public string NextPage { get; set; }
         public string PreviousPage { get; set; }
     }

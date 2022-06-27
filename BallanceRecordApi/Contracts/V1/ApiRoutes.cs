@@ -25,5 +25,12 @@ namespace BallanceRecordApi.Contracts.V1
             public const string Email = Prefix + "/user/email";
             public const string Confirmation = Prefix + "/user/confirmation";
         }
+
+        public static class Session
+        {
+            public const string Create = Prefix + "/session";
+            public const string Get = Prefix + "/session/{sessionId}";
+            public const string GetAll = Prefix + "/session";
+        }
     }
 }

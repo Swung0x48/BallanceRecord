@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Authentication;
 using System.Threading.Tasks;
 using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
@@ -53,7 +54,10 @@ namespace BallanceRecordApi.IntegrationTest
             });
 
             var succeed = response.IsSuccessStatusCode;
-            
+
+            if (!succeed)
+                throw new AuthenticationException("Get JWT failed. Response: " + response);
+
             var registrationResponse = await response.Content.ReadAsAsync<AuthSuccessResponse>();
 
             return registrationResponse.Token;

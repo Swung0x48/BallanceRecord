@@ -14,7 +14,7 @@ namespace BallanceRecordApi.Mapping
                 .ForMember(dest => dest.Duration,
                     option => 
                         option.MapFrom(src => TimeSpan.FromSeconds(src.Duration)));
-            CreateMap<PaginationQuery, PaginationFilter>();
+            CreateMap<PaginationQuery<RecordOrderBy>, PaginationFilter<RecordOrderBy>>();
         }
     }
 }

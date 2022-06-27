@@ -7,7 +7,7 @@ namespace BallanceRecordApi.Services
 {
     public interface IRecordService
     {
-        Task<List<Record>> GetRecordsAsync(PaginationFilter paginationFilter = null);
+        Task<List<Record>> GetRecordsAsync(PaginationFilter<RecordOrderBy> paginationFilter = null);
         Task<Record> GetRecordByIdAsync(Guid recordId);
         Task<bool> UpdateRecordAsync(Record recordToUpdate);
         Task<bool> DeleteRecordAsync(Guid recordId);

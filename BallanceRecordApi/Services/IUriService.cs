@@ -7,7 +7,7 @@ namespace BallanceRecordApi.Services
     {
         Uri GetRecordUri(string recordId);
 
-        Uri GetAllRecordsUri(PaginationQuery pagination = null);
+        Uri GetAllRecordsUri<T>(PaginationQuery<T> pagination = null);
 
         Uri GetUserConfirmationUri(string userId, string token);
     }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using BallanceRecordApi.Contracts.V1.Requests.Queries;
@@ -9,17 +10,17 @@ namespace BallanceRecordApi.Helpers
 {
     public class PaginationHelpers
     {
-        public static PagedResponse<T> CreatePagedResponse<T>(IUriService uriService, PaginationFilter pagination, List<T> responses)
+        public static PagedResponse<TData, TOrderBy> CreatePagedResponse<TData, TOrderBy>(IUriService uriService, PaginationFilter<TOrderBy> pagination, List<TData> responses)
         {
             var nextPage = pagination.PageNumber >= 1
-                ? uriService.GetAllRecordsUri(new PaginationQuery(pagination.PageNumber + 1, pagination.PageSize, pagination.OrderBy)).ToString()
+                ? uriService.GetAllRecordsUri(new PaginationQuery<TOrderBy>(pagination.PageNumber + 1, pagination.PageSize, pagination.OrderBy)).ToString()
                 : null;
             
             var previousPage = pagination.PageNumber - 1 >= 1
-                ? uriService.GetAllRecordsUri(new PaginationQuery(pagination.PageNumber - 1, pagination.PageSize, pagination.OrderBy)).ToString()
+                ? uriService.GetAllRecordsUri(new PaginationQuery<TOrderBy>(pagination.PageNumber - 1, pagination.PageSize, pagination.OrderBy)).ToString()
                 : null;
-            
-            return new PagedResponse<T>
+
+            return new PagedResponse<TData, TOrderBy>
             {
                 Data = responses,
                 PageNumber = pagination.PageNumber >= 1 ? pagination.PageNumber : (int?)null,

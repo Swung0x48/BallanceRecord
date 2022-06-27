@@ -17,7 +17,7 @@ namespace BallanceRecordApi.Services
             _dataContext = dataContext;
         }
 
-        public async Task<List<Record>> GetRecordsAsync(PaginationFilter paginationFilter = null)
+        public async Task<List<Record>> GetRecordsAsync(PaginationFilter<RecordOrderBy> paginationFilter = null)
         {
             var records = _dataContext.Records.Include(x => x.User);
             
@@ -27,15 +27,16 @@ namespace BallanceRecordApi.Services
             }
 
             var skipSize = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
+
             return paginationFilter.OrderBy switch
             {
-                PaginationFilter.OrderByType.HighScore => await records
+                RecordOrderBy.HighScore => await records
                     .OrderByDescending(x => x.Score)
                     .ThenBy(xx => xx.Duration)
                     .Skip(skipSize)
                     .Take(paginationFilter.PageSize)
                     .ToListAsync(),
-                PaginationFilter.OrderByType.SpeedRun => await records
+                RecordOrderBy.SpeedRun => await records
                     .OrderBy(xx => xx.Duration)
                     .ThenByDescending(x => x.Score)
                     .Skip(skipSize)

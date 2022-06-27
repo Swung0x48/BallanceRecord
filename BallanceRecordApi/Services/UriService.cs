@@ -19,7 +19,7 @@ namespace BallanceRecordApi.Services
             return new Uri(_baseUri + ApiRoutes.Records.Get.Replace("{recordId}", recordId));
         }
 
-        public Uri GetAllRecordsUri(PaginationQuery pagination = null)
+        public Uri GetAllRecordsUri<T>(PaginationQuery<T> pagination = null)
         {
             var uri = new Uri(_baseUri);
 

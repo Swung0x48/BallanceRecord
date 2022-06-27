@@ -35,15 +35,15 @@ namespace BallanceRecordApi.Controllers.V1
 
         [HttpGet(ApiRoutes.Records.GetAll)]
         [Cached(600)]
-        public async Task<IActionResult> GetAll([FromQuery] PaginationQuery paginationQuery)
+        public async Task<IActionResult> GetAll([FromQuery] PaginationQuery<RecordOrderBy> paginationQuery)
         {
-            var pagination = _mapper.Map<PaginationFilter>(paginationQuery);
+            var pagination = _mapper.Map<PaginationFilter<RecordOrderBy>>(paginationQuery);
             var records = await _recordService.GetRecordsAsync(pagination);
             var recordResponses = _mapper.Map<List<RecordResponse>>(records);
 
             if (pagination is null || pagination.PageNumber < 1 || pagination.PageSize < 1)
             {
-                return Ok(new PagedResponse<RecordResponse>(recordResponses));
+                return Ok(new PagedResponse<RecordResponse, RecordOrderBy>(recordResponses));
             }
             
             var pagedResponse = PaginationHelpers.CreatePagedResponse(_uriService, pagination, recordResponses);
@@ -144,7 +144,7 @@ namespace BallanceRecordApi.Controllers.V1
         //     return NotFound();
         // }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "User")]
         [HttpPost(ApiRoutes.Records.Create)]
         public async Task<IActionResult> Create([FromBody] CreateRecordRequest recordRequest)
         {
