@@ -24,13 +24,16 @@ namespace BallanceRecordApi.Controllers.V1
         private readonly IRecordService _recordService;
         private readonly IMapper _mapper;
         private readonly IUriService _uriService;
+
+        private readonly IIdentityService _identityService;
         // private readonly IObjectStorageService _objectStorageService;
         
-        public RecordsController(IRecordService recordService, IMapper mapper, IUriService uriService)
+        public RecordsController(IRecordService recordService, IMapper mapper, IUriService uriService, IIdentityService identityService)
         {
             _recordService = recordService;
             _mapper = mapper;
             _uriService = uriService;
+            _identityService = identityService;
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
@@ -150,6 +153,40 @@ namespace BallanceRecordApi.Controllers.V1
         {
             var record = _mapper.Map<Record>(recordRequest);
             record.UserId = HttpContext.GetUserId();
+            record.TimeCreated = DateTime.Now;
+            record.TimeModified = DateTime.Now;
+            // var record = new Record
+            // {
+            //     Remark = recordRequest.Remark,
+            //     UserId = HttpContext.GetUserId(),
+            //     MapHash = recordRequest.MapHash,
+            //     Score = recordRequest.Score,
+            //     Duration = TimeSpan.FromSeconds(recordRequest.Duration),
+            //     TimeCreated = DateTime.Now,
+            //     TimeModified = DateTime.Now,
+            //     BallSpeed = recordRequest.BallSpeed,
+            //     IsBouncing = recordRequest.IsBouncing
+            // };
+            
+            if (record.Id == Guid.Empty)
+                record.Id = Guid.NewGuid();
+
+            await _recordService.CreateRecordAsync(record);
+            
+            var locationUri = _uriService.GetRecordUri(record.Id.ToString());
+            var recordResponse = new Response<RecordResponse>(_mapper.Map<RecordResponse>(await _recordService.GetRecordByIdAsync(record.Id)));
+            return Created(locationUri, recordResponse);
+        }
+        
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        [HttpPost(ApiRoutes.Records.CreateDefiningUser)]
+        public async Task<IActionResult> CreateDefiningUser([FromBody] CreateRecordRequest recordRequest, [FromRoute] Guid userId)
+        {
+            if (!await _identityService.UserExistsAsync(userId))
+                return BadRequest(new {error = "User does not exists."});
+            
+            var record = _mapper.Map<Record>(recordRequest);
+            record.UserId = userId.ToString();
             record.TimeCreated = DateTime.Now;
             record.TimeModified = DateTime.Now;
             // var record = new Record
