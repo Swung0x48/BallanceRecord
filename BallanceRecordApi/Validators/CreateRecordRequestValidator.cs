@@ -1,3 +1,4 @@
+using System;
 using BallanceRecordApi.Contracts.V1.Requests;
 using FluentValidation;
 
@@ -11,6 +12,19 @@ namespace BallanceRecordApi.Validators
                 .Length(64);
             RuleFor(x => x.Duration)
                 .GreaterThanOrEqualTo(0);
+            RuleFor(x => x.RoomId)
+                .Custom((s, context) =>
+                {
+                    if (string.IsNullOrEmpty(s)) return;
+                    try
+                    {
+                        Guid.Parse(s);
+                    }
+                    catch (FormatException e)
+                    {
+                        context.AddFailure(e.Message);
+                    }
+                });
         }
     }
 }

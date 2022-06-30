@@ -19,7 +19,7 @@ namespace BallanceRecordApi.Services
             return new Uri(_baseUri + ApiRoutes.Records.Get.Replace("{recordId}", recordId));
         }
 
-        public Uri GetAllRecordsUri<T>(PaginationQuery<T> pagination = null)
+        public Uri GetAllUri<T>(PaginationQuery<T> pagination = null)
         {
             var uri = new Uri(_baseUri);
 
@@ -42,6 +42,11 @@ namespace BallanceRecordApi.Services
             modifiedUri = QueryHelpers.AddQueryString(modifiedUri, "token", token);
 
             return new Uri(modifiedUri);
+        }
+
+        public Uri GetRoomUri(string roomId)
+        {
+            return new Uri(_baseUri + ApiRoutes.Room.Get.Replace($"{roomId}", roomId));
         }
     }
 }

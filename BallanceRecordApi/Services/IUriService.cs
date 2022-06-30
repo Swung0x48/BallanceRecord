@@ -7,8 +7,9 @@ namespace BallanceRecordApi.Services
     {
         Uri GetRecordUri(string recordId);
 
-        Uri GetAllRecordsUri<T>(PaginationQuery<T> pagination = null);
+        Uri GetAllUri<T>(PaginationQuery<T> pagination = null);
 
         Uri GetUserConfirmationUri(string userId, string token);
+        Uri GetRoomUri(string roomId);
     }
 }

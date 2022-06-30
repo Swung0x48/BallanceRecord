@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
+#nullable disable
+
 namespace BallanceRecordApi.Migrations
 {
     [DbContext(typeof(DataContext))]
@@ -14,8 +16,8 @@ namespace BallanceRecordApi.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Relational:MaxIdentifierLength", 64)
-                .HasAnnotation("ProductVersion", "5.0.0");
+                .HasAnnotation("ProductVersion", "6.0.6")
+                .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             modelBuilder.Entity("BallanceRecordApi.Domain.Record", b =>
                 {
@@ -33,10 +35,13 @@ namespace BallanceRecordApi.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("MapHash")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Remark")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("RoomId")
+                        .HasColumnType("char(36)");
 
                     b.Property<int>("Score")
                         .HasColumnType("int");
@@ -48,9 +53,11 @@ namespace BallanceRecordApi.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
 
                     b.HasIndex("UserId");
 
@@ -61,7 +68,7 @@ namespace BallanceRecordApi.Migrations
                 {
                     b.Property<string>("Token")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime(6)");
@@ -73,13 +80,13 @@ namespace BallanceRecordApi.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("JwtId")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("Used")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Token");
 
@@ -88,22 +95,47 @@ namespace BallanceRecordApi.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
+            modelBuilder.Entity("BallanceRecordApi.Domain.Room", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Remark")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RoomHostUserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomHostUserId");
+
+                    b.ToTable("Rooms");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(256)");
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(256)");
 
                     b.HasKey("Id");
 
@@ -111,7 +143,7 @@ namespace BallanceRecordApi.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("AspNetRoles");
+                    b.ToTable("AspNetRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -121,37 +153,37 @@ namespace BallanceRecordApi.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ClaimType")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("ClaimValue")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims");
+                    b.ToTable("AspNetRoleClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(256)");
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("tinyint(1)");
@@ -164,30 +196,30 @@ namespace BallanceRecordApi.Migrations
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(256)");
 
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(256)");
 
                     b.Property<string>("PasswordHash")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
-                        .HasColumnType("varchar(256) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(256)");
 
                     b.HasKey("Id");
 
@@ -198,7 +230,7 @@ namespace BallanceRecordApi.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers");
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -208,87 +240,93 @@ namespace BallanceRecordApi.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ClaimType")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("ClaimValue")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims");
+                    b.ToTable("AspNetUserClaims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
-                        .HasColumnType("varchar(128) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(128)");
 
                     b.Property<string>("ProviderKey")
                         .HasMaxLength(128)
-                        .HasColumnType("varchar(128) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(128)");
 
                     b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins");
+                    b.ToTable("AspNetUserLogins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("RoleId")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("UserId", "RoleId");
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles");
+                    b.ToTable("AspNetUserRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("varchar(255) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
-                        .HasColumnType("varchar(128) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(128)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(128)
-                        .HasColumnType("varchar(128) CHARACTER SET utf8mb4");
+                        .HasColumnType("varchar(128)");
 
                     b.Property<string>("Value")
-                        .HasColumnType("longtext CHARACTER SET utf8mb4");
+                        .HasColumnType("longtext");
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens");
+                    b.ToTable("AspNetUserTokens", (string)null);
                 });
 
             modelBuilder.Entity("BallanceRecordApi.Domain.Record", b =>
                 {
+                    b.HasOne("BallanceRecordApi.Domain.Room", "Room")
+                        .WithMany()
+                        .HasForeignKey("RoomId");
+
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
+
+                    b.Navigation("Room");
 
                     b.Navigation("User");
                 });
@@ -298,6 +336,15 @@ namespace BallanceRecordApi.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BallanceRecordApi.Domain.Room", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("RoomHostUserId");
 
                     b.Navigation("User");
                 });

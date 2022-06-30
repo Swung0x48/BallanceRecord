@@ -11,6 +11,7 @@ namespace BallanceRecordApi.Domain
         public Guid Id { get; set; }
         public string Remark { get; set; }
         public string UserId { get; set; }
+        public Guid? RoomId { get; set; }
         public string MapHash { get; set; }
         public int Score { get; set; }
         public TimeSpan Duration { get; set; }
@@ -21,5 +22,7 @@ namespace BallanceRecordApi.Domain
         
         [ForeignKey(nameof(UserId))]
         public IdentityUser User { get; set; }
+        [ForeignKey(nameof(RoomId))]
+        public Room Room { get; set; }
     }
 }

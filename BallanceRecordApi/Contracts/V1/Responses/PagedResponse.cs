@@ -15,7 +15,6 @@ namespace BallanceRecordApi.Contracts.V1.Responses
         public IEnumerable<TData> Data { get; set; }
         public int? PageNumber { get; set; }
         public int? PageSize { get; set; }
-        public int? PageCount { get; set; }
         public TOrderBy? OrderBy { get; set; }
         public string NextPage { get; set; }
         public string PreviousPage { get; set; }

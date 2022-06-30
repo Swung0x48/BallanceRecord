@@ -10,6 +10,7 @@ namespace BallanceRecordApi.Contracts.V1.Responses
         public string Username { get; set; }
         public string MapHash { get; set; }
         public int Score { get; set; }
+        public Guid? RoomId { get; set; }
         public double Duration { get; set; }
         public DateTime TimeCreated { get; set; }
         public DateTime TimeModified { get; set; }

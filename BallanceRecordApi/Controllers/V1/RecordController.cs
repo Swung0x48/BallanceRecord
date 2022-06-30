@@ -19,34 +19,35 @@ using Swung0x48.Ballance.TdbReader;
 
 namespace BallanceRecordApi.Controllers.V1
 {
-    public class RecordsController: Controller
+    public class RecordController: Controller
     {
         private readonly IRecordService _recordService;
         private readonly IMapper _mapper;
         private readonly IUriService _uriService;
-
+        private readonly IRoomService _roomService;
         private readonly IIdentityService _identityService;
         // private readonly IObjectStorageService _objectStorageService;
         
-        public RecordsController(IRecordService recordService, IMapper mapper, IUriService uriService, IIdentityService identityService)
+        public RecordController(IRecordService recordService, IMapper mapper, IUriService uriService, IIdentityService identityService, IRoomService roomService)
         {
             _recordService = recordService;
             _mapper = mapper;
             _uriService = uriService;
             _identityService = identityService;
+            _roomService = roomService;
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
         [Cached(600)]
-        public async Task<IActionResult> GetAll([FromQuery] PaginationQuery<RecordOrderBy> paginationQuery)
+        public async Task<IActionResult> GetAll([FromQuery] PaginationQuery<OrderByEnums.RecordOrderBy> paginationQuery)
         {
-            var pagination = _mapper.Map<PaginationFilter<RecordOrderBy>>(paginationQuery);
+            var pagination = _mapper.Map<PaginationFilter<OrderByEnums.RecordOrderBy>>(paginationQuery);
             var records = await _recordService.GetRecordsAsync(pagination);
             var recordResponses = _mapper.Map<List<RecordResponse>>(records);
 
             if (pagination is null || pagination.PageNumber < 1 || pagination.PageSize < 1)
             {
-                return Ok(new PagedResponse<RecordResponse, RecordOrderBy>(recordResponses));
+                return Ok(new PagedResponse<RecordResponse, OrderByEnums.RecordOrderBy>(recordResponses));
             }
             
             var pagedResponse = PaginationHelpers.CreatePagedResponse(_uriService, pagination, recordResponses);
@@ -83,6 +84,32 @@ namespace BallanceRecordApi.Controllers.V1
             
             return Ok(new Response<RecordResponse>(_mapper.Map<RecordResponse>(record)));
         }
+
+        [HttpGet(ApiRoutes.Records.GetByRoom)]
+        public async Task<IActionResult> GetByRoom([FromRoute] Guid roomId, [FromQuery] PaginationQuery<OrderByEnums.RecordOrderBy> paginationQuery)
+        {
+            var room = await _roomService.GetRoomsByIdAsync(roomId);
+            if (room is null)
+                return NotFound(new {error = "Cannot find such room."});
+            var pagination = _mapper.Map<PaginationFilter<OrderByEnums.RecordOrderBy>>(paginationQuery);
+            var records = await _recordService.GetRecordByRoomAsync(room.Id);
+            var recordResponses = _mapper.Map<List<RecordResponse>>(records);
+
+            if (pagination is null)
+            {
+                return Ok(recordResponses);
+            }
+            
+            if (pagination.PageNumber < 1 || pagination.PageSize < 1)
+            {
+                return Ok(new PagedResponse<RecordResponse, OrderByEnums.RecordOrderBy>(recordResponses));
+            }
+            
+            var pagedResponse = PaginationHelpers.CreatePagedResponse(_uriService, pagination, recordResponses);
+
+            return Ok(pagedResponse);
+        }
+
         
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPut(ApiRoutes.Records.Update)]
@@ -147,35 +174,11 @@ namespace BallanceRecordApi.Controllers.V1
         //     return NotFound();
         // }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "User")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost(ApiRoutes.Records.Create)]
         public async Task<IActionResult> Create([FromBody] CreateRecordRequest recordRequest)
         {
-            var record = _mapper.Map<Record>(recordRequest);
-            record.UserId = HttpContext.GetUserId();
-            record.TimeCreated = DateTime.Now;
-            record.TimeModified = DateTime.Now;
-            // var record = new Record
-            // {
-            //     Remark = recordRequest.Remark,
-            //     UserId = HttpContext.GetUserId(),
-            //     MapHash = recordRequest.MapHash,
-            //     Score = recordRequest.Score,
-            //     Duration = TimeSpan.FromSeconds(recordRequest.Duration),
-            //     TimeCreated = DateTime.Now,
-            //     TimeModified = DateTime.Now,
-            //     BallSpeed = recordRequest.BallSpeed,
-            //     IsBouncing = recordRequest.IsBouncing
-            // };
-            
-            if (record.Id == Guid.Empty)
-                record.Id = Guid.NewGuid();
-
-            await _recordService.CreateRecordAsync(record);
-            
-            var locationUri = _uriService.GetRecordUri(record.Id.ToString());
-            var recordResponse = new Response<RecordResponse>(_mapper.Map<RecordResponse>(await _recordService.GetRecordByIdAsync(record.Id)));
-            return Created(locationUri, recordResponse);
+            return await CreateDefiningUser(recordRequest, Guid.Parse(HttpContext.GetUserId()));
         }
         
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
@@ -183,8 +186,19 @@ namespace BallanceRecordApi.Controllers.V1
         public async Task<IActionResult> CreateDefiningUser([FromBody] CreateRecordRequest recordRequest, [FromRoute] Guid userId)
         {
             if (!await _identityService.UserExistsAsync(userId))
-                return BadRequest(new {error = "User does not exists."});
-            
+                return BadRequest(new {error = "User does not exist."});
+
+            if (!string.IsNullOrEmpty(recordRequest.RoomId))
+            {
+                var room = await _roomService.GetRoomsByIdAsync(Guid.Parse(recordRequest.RoomId));
+                if (room is null) 
+                    return BadRequest(new { error = "Room does not exist." });
+
+                if (room.Status != Status.Running)
+                    return BadRequest(new { error = "Room requested is not running thus cannot submit." });
+                
+            }
+
             var record = _mapper.Map<Record>(recordRequest);
             record.UserId = userId.ToString();
             record.TimeCreated = DateTime.Now;

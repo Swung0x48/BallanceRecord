@@ -2,6 +2,7 @@ using System;
 using AutoMapper;
 using BallanceRecordApi.Contracts.V1.Responses;
 using BallanceRecordApi.Domain;
+using Microsoft.AspNetCore.Identity;
 
 namespace BallanceRecordApi.Mapping
 {
@@ -13,7 +14,9 @@ namespace BallanceRecordApi.Mapping
                 .ForMember(dest => dest.Username,
                     opt => opt.MapFrom(src => src.User.UserName))
                 .ForMember(dest => dest.Duration,
-                    opt => opt.MapFrom(src => src.Duration.TotalSeconds));
+                    opt => opt.MapFrom(src => src.Duration.TotalMilliseconds));
+            CreateMap<Room, RoomResponse>();
+            CreateMap<IdentityUser, UserInfoResponse>();
         }
     }
 }

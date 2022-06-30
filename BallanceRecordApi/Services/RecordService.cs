@@ -17,7 +17,7 @@ namespace BallanceRecordApi.Services
             _dataContext = dataContext;
         }
 
-        public async Task<List<Record>> GetRecordsAsync(PaginationFilter<RecordOrderBy> paginationFilter = null)
+        public async Task<List<Record>> GetRecordsAsync(PaginationFilter<OrderByEnums.RecordOrderBy> paginationFilter = null)
         {
             var records = _dataContext.Records.Include(x => x.User);
             
@@ -30,13 +30,13 @@ namespace BallanceRecordApi.Services
 
             return paginationFilter.OrderBy switch
             {
-                RecordOrderBy.HighScore => await records
+                OrderByEnums.RecordOrderBy.HighScore => await records
                     .OrderByDescending(x => x.Score)
                     .ThenBy(xx => xx.Duration)
                     .Skip(skipSize)
                     .Take(paginationFilter.PageSize)
                     .ToListAsync(),
-                RecordOrderBy.SpeedRun => await records
+                OrderByEnums.RecordOrderBy.SpeedRun => await records
                     .OrderBy(xx => xx.Duration)
                     .ThenByDescending(x => x.Score)
                     .Skip(skipSize)
@@ -50,6 +50,16 @@ namespace BallanceRecordApi.Services
         {
             return await _dataContext.Records.Include(x => x.User).SingleOrDefaultAsync(x => x.Id == recordId);
         }
+
+        public async Task<List<Record>> GetRecordByRoomAsync(Guid roomId)
+        {
+            return await _dataContext.Records
+                .Include(x => x.User)
+                .Where(xx => xx.RoomId == roomId)
+                .ToListAsync();
+        }
+
+        
 
         public async Task<bool> CreateRecordAsync(Record record)
         {

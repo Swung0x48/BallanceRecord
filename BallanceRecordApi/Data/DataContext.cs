@@ -13,6 +13,6 @@ namespace BallanceRecordApi.Data
 
         public DbSet<Record> Records { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
-        public DbSet<Session> Sessions { get; set; }
+        public DbSet<Room> Rooms { get; set; }
     }
 }

@@ -8,7 +8,7 @@ public class OrderByEnums
         SpeedRun
     }
 
-    public enum SessionOrderBy
+    public enum RoomOrderBy
     {
         
     }

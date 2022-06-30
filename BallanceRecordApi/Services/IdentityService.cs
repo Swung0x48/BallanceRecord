@@ -120,9 +120,14 @@ namespace BallanceRecordApi.Services
 
         public async Task<bool> UserExistsAsync(Guid userId)
         {
-            return await _userManager.FindByIdAsync(userId.ToString()) is not null;
+            return await GetUserById(userId) is not null;
         }
-        
+
+        public async Task<IdentityUser> GetUserById(Guid userId)
+        {
+            return await _userManager.FindByIdAsync(userId.ToString());
+        }
+
         public async Task<AuthenticationResult> RefreshTokenAsync(string refreshToken)
         {
             // var validatedToken = GetPrincipalFromToken(token);

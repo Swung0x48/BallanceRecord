@@ -1,5 +1,6 @@
 using System;
 using BallanceRecordApi.Data;
+using BallanceRecordApi.Domain;
 using BallanceRecordApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,7 @@ namespace BallanceRecordApi.Installers
                 .AddEntityFrameworkStores<DataContext>();
             
             services.AddScoped<IRecordService, RecordService>();
+            services.AddScoped<IRoomService, RoomService>();
         }
     }
 }

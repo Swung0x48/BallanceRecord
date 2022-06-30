@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using AutoMapper;
 using BallanceRecordApi.Contracts.HealthChecks;
@@ -96,6 +97,13 @@ namespace BallanceRecordApi
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
             });
+
+            var webSocketOptions = new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromMinutes(2)
+            };
+
+            app.UseWebSockets(webSocketOptions);
         }
     }
 }

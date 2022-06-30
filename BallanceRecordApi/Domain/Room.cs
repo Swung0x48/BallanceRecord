@@ -12,13 +12,14 @@ public enum Status
     Ended
 }
 
-public class Session
+public class Room
 {
     [Key]
     public Guid Id { get; set; }
+    public string Name { get; set; }
     public string Remark { get; set; }
     public Status Status { get; set; }
-    public string UserId { get; set; }
-    [ForeignKey(nameof(UserId))]
+    public string RoomHostUserId { get; set; }
+    [ForeignKey(nameof(RoomHostUserId))]
     public IdentityUser User { get; set; }
 }

@@ -13,11 +13,11 @@ namespace BallanceRecordApi.Helpers
         public static PagedResponse<TData, TOrderBy> CreatePagedResponse<TData, TOrderBy>(IUriService uriService, PaginationFilter<TOrderBy> pagination, List<TData> responses)
         {
             var nextPage = pagination.PageNumber >= 1
-                ? uriService.GetAllRecordsUri(new PaginationQuery<TOrderBy>(pagination.PageNumber + 1, pagination.PageSize, pagination.OrderBy)).ToString()
+                ? uriService.GetAllUri(new PaginationQuery<TOrderBy>(pagination.PageNumber + 1, pagination.PageSize, pagination.OrderBy)).ToString()
                 : null;
             
             var previousPage = pagination.PageNumber - 1 >= 1
-                ? uriService.GetAllRecordsUri(new PaginationQuery<TOrderBy>(pagination.PageNumber - 1, pagination.PageSize, pagination.OrderBy)).ToString()
+                ? uriService.GetAllUri(new PaginationQuery<TOrderBy>(pagination.PageNumber - 1, pagination.PageSize, pagination.OrderBy)).ToString()
                 : null;
 
             return new PagedResponse<TData, TOrderBy>

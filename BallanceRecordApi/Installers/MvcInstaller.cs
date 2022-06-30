@@ -25,8 +25,7 @@ namespace BallanceRecordApi.Installers
                     options.EnableEndpointRouting = false;
                     options.Filters.Add<ValidationFilter>();
                 })
-                .AddFluentValidation(mvcConfiguration => mvcConfiguration.RegisterValidatorsFromAssemblyContaining<Startup>())
-                .SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+                .AddFluentValidation(mvcConfiguration => mvcConfiguration.RegisterValidatorsFromAssemblyContaining<Startup>());
             
             #region JWT Authentication
 

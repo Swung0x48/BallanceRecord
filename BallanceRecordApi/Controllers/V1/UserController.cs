@@ -1,10 +1,14 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using BallanceRecordApi.Contracts.V1;
 using BallanceRecordApi.Contracts.V1.Requests;
 using BallanceRecordApi.Contracts.V1.Responses;
+using BallanceRecordApi.Extensions;
 using BallanceRecordApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BallanceRecordApi.Controllers.V1
@@ -14,13 +18,37 @@ namespace BallanceRecordApi.Controllers.V1
         private readonly IIdentityService _identityService;
         private readonly IEmailService _emailService;
         private readonly IUriService _uriService;
-        public UserController(IIdentityService identityService, IEmailService emailService, IUriService uriService)
+        private readonly IMapper _mapper;
+        public UserController(IIdentityService identityService, IEmailService emailService, IUriService uriService, IMapper mapper)
         {
             _identityService = identityService;
             _emailService = emailService;
             _uriService = uriService;
+            _mapper = mapper;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet(ApiRoutes.Identity.GetSelf)]
+        public async Task<IActionResult> Get()
+        {
+            var user = await _identityService.GetUserById(Guid.Parse(HttpContext.GetUserId()));
+            
+            return Ok(new Response<UserInfoResponse>(_mapper.Map<UserInfoResponse>(user)));
+        }
+        
+        [HttpGet(ApiRoutes.Identity.Get)]
+        public async Task<IActionResult> Get([FromRoute] Guid userId)
+        {
+            var user = await _identityService.GetUserById(userId);
+            if (user is null)
+                return NotFound();
+            var response = new BriefUserInfoResponse
+            {
+                UserName = user.UserName
+            };
+            return Ok(new Response<BriefUserInfoResponse>(response));
+        }
+        
         [HttpPost(ApiRoutes.Identity.Register)]
         public async Task<IActionResult> Register([FromBody] UserRegistrationRequest request)
         {
