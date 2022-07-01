@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Swung0x48.Ballance.TdbReader;
 
 namespace BallanceRecordApi.Controllers.V1
@@ -26,15 +27,17 @@ namespace BallanceRecordApi.Controllers.V1
         private readonly IUriService _uriService;
         private readonly IRoomService _roomService;
         private readonly IIdentityService _identityService;
+        private readonly IWebSocketService _webSocketService;
         // private readonly IObjectStorageService _objectStorageService;
         
-        public RecordController(IRecordService recordService, IMapper mapper, IUriService uriService, IIdentityService identityService, IRoomService roomService)
+        public RecordController(IRecordService recordService, IMapper mapper, IUriService uriService, IIdentityService identityService, IRoomService roomService, IWebSocketService webSocketService)
         {
             _recordService = recordService;
             _mapper = mapper;
             _uriService = uriService;
             _identityService = identityService;
             _roomService = roomService;
+            _webSocketService = webSocketService;
         }
 
         [HttpGet(ApiRoutes.Records.GetAll)]
@@ -196,25 +199,12 @@ namespace BallanceRecordApi.Controllers.V1
 
                 if (room.Status != Status.Running)
                     return BadRequest(new { error = "Room requested is not running thus cannot submit." });
-                
             }
 
             var record = _mapper.Map<Record>(recordRequest);
             record.UserId = userId.ToString();
             record.TimeCreated = DateTime.Now;
             record.TimeModified = DateTime.Now;
-            // var record = new Record
-            // {
-            //     Remark = recordRequest.Remark,
-            //     UserId = HttpContext.GetUserId(),
-            //     MapHash = recordRequest.MapHash,
-            //     Score = recordRequest.Score,
-            //     Duration = TimeSpan.FromSeconds(recordRequest.Duration),
-            //     TimeCreated = DateTime.Now,
-            //     TimeModified = DateTime.Now,
-            //     BallSpeed = recordRequest.BallSpeed,
-            //     IsBouncing = recordRequest.IsBouncing
-            // };
             
             if (record.Id == Guid.Empty)
                 record.Id = Guid.NewGuid();
@@ -223,6 +213,11 @@ namespace BallanceRecordApi.Controllers.V1
             
             var locationUri = _uriService.GetRecordUri(record.Id.ToString());
             var recordResponse = new Response<RecordResponse>(_mapper.Map<RecordResponse>(await _recordService.GetRecordByIdAsync(record.Id)));
+            
+            await _webSocketService.Broadcast(JsonConvert.SerializeObject(recordResponse),
+                data => !string.IsNullOrEmpty(recordRequest.RoomId) && data.Values.ContainsKey("roomId") &&
+                                recordRequest.RoomId == data.Values["roomId"]?.ToString());
+
             return Created(locationUri, recordResponse);
         }
     }

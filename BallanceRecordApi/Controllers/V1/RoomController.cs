@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.WebSockets;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using BallanceRecordApi.Contracts.V1;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace BallanceRecordApi.Controllers.V1
 {
@@ -24,12 +26,14 @@ namespace BallanceRecordApi.Controllers.V1
         private readonly IMapper _mapper;
         private readonly IRoomService _roomService;
         private readonly IUriService _uriService;
+        private readonly IWebSocketService _webSocketService;
 
-        public RoomController(IMapper mapper, IRoomService roomService, IUriService uriService)
+        public RoomController(IMapper mapper, IRoomService roomService, IUriService uriService, IWebSocketService webSocketService)
         {
             _mapper = mapper;
             _roomService = roomService;
             _uriService = uriService;
+            _webSocketService = webSocketService;
         }
 
         [HttpGet(ApiRoutes.Room.GetAll)]
@@ -45,7 +49,7 @@ namespace BallanceRecordApi.Controllers.V1
             }
             
             var pagedResponse = PaginationHelpers.CreatePagedResponse(_uriService, pagination, roomResponses);
-
+            
             return Ok(pagedResponse);
         }
         
@@ -103,9 +107,12 @@ namespace BallanceRecordApi.Controllers.V1
             room.Name = request.Name;
 
             var updated = await _roomService.UpdateRoomAsync(room);
-            if (updated)
-                return Ok(new Response<RoomResponse>(_mapper.Map<RoomResponse>(room)));
-            return NotFound();
+            if (!updated) return NotFound();
+            
+            var response = new Response<RoomResponse>(_mapper.Map<RoomResponse>(room));
+            await _webSocketService.Broadcast(JsonConvert.SerializeObject(response), 
+                data => RouteData.Values["roomId"]?.ToString() == data.Values["roomId"]?.ToString());
+            return Ok(response);
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -122,11 +129,35 @@ namespace BallanceRecordApi.Controllers.V1
                 return NotFound();
             room.Status = request.Status;
             var updated = await _roomService.UpdateRoomAsync(room);
-            if (updated)
-                return Ok(new Response<RoomResponse>(_mapper.Map<RoomResponse>(room)));
-            return NotFound();
+            if (!updated)
+                return NotFound();
+            var response = new Response<RoomResponse>(_mapper.Map<RoomResponse>(room));
+            await _webSocketService.Broadcast(JsonConvert.SerializeObject(response), 
+                data => RouteData.Values["roomId"]?.ToString() == data.Values["roomId"]?.ToString());
+            return Ok(response);
         }
         
-        
+        [HttpGet(ApiRoutes.Room.Events)]
+        public async Task GetRoomEvents([FromRoute] Guid roomId)
+        {
+            foreach (var (key, value) in RouteData.Values)
+            {
+                Console.WriteLine($"{key}, {value}");
+            }
+            if (HttpContext.WebSockets.IsWebSocketRequest)
+            {
+                var room = await _roomService.GetRoomsByIdAsync(roomId);
+                using var ws = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                if (room is null)
+                {
+                    await ws.CloseAsync(WebSocketCloseStatus.EndpointUnavailable, "No such room found", CancellationToken.None);
+                }
+                await _webSocketService.Process(ws, RouteData);
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            }
+        }
     }
 }

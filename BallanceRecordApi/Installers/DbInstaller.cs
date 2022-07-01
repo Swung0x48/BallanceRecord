@@ -1,7 +1,5 @@
 using System;
 using BallanceRecordApi.Data;
-using BallanceRecordApi.Domain;
-using BallanceRecordApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,9 +20,6 @@ namespace BallanceRecordApi.Installers
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<DataContext>();
-            
-            services.AddScoped<IRecordService, RecordService>();
-            services.AddScoped<IRoomService, RoomService>();
         }
     }
 }

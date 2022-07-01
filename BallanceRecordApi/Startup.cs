@@ -90,6 +90,13 @@ namespace BallanceRecordApi
             app.UseAuthentication();
             app.UseAuthorization();
             
+            var webSocketOptions = new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromMinutes(2)
+            };
+
+            app.UseWebSockets(webSocketOptions);
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
@@ -97,13 +104,6 @@ namespace BallanceRecordApi
                     pattern: "{controller=Home}/{action=Index}/{id?}");
                 endpoints.MapRazorPages();
             });
-
-            var webSocketOptions = new WebSocketOptions
-            {
-                KeepAliveInterval = TimeSpan.FromMinutes(2)
-            };
-
-            app.UseWebSockets(webSocketOptions);
         }
     }
 }
