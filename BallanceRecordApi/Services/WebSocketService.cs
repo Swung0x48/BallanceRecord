@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -27,19 +28,22 @@ public class WebSocketService: IWebSocketService
     public async Task Process(WebSocket ws, RouteData route)
     {
         var connection = new Connection(ws, route);
-        Console.WriteLine($"accepting {ws.GetHashCode()}");
+        // Console.WriteLine($"accepting {ws.GetHashCode()}");
         _aliveConnections.TryAdd(connection.GetHashCode(), connection);
-        var buffer = new byte[1024];
+        var buffer = new byte[5 * 1024];
         var res = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
         var username = $"Unidentified{ws.GetHashCode()}";
         while (!res.CloseStatus.HasValue) {
             var content = Encoding.UTF8.GetString(buffer, 0, res.Count);
             if (!string.IsNullOrEmpty(content)) {
                 Console.WriteLine($"Received from {ws.GetHashCode()}: {content}");
+                if (content == "/close")
+                    break;
             }
             res = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
         }
-        await ws.CloseAsync(res.CloseStatus.Value, res.CloseStatusDescription, CancellationToken.None);
+
+        await ws.CloseAsync(res.CloseStatus ?? WebSocketCloseStatus.InternalServerError, res.CloseStatusDescription, CancellationToken.None);
         _aliveConnections.TryRemove(connection.GetHashCode(), out _);
     }
 

@@ -140,10 +140,6 @@ namespace BallanceRecordApi.Controllers.V1
         [HttpGet(ApiRoutes.Room.Events)]
         public async Task GetRoomEvents([FromRoute] Guid roomId)
         {
-            foreach (var (key, value) in RouteData.Values)
-            {
-                Console.WriteLine($"{key}, {value}");
-            }
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
                 var room = await _roomService.GetRoomsByIdAsync(roomId);
