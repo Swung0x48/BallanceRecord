@@ -42,6 +42,7 @@ namespace BallanceRecordApi
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseWebRoot("Static");
                 });
     }
 }

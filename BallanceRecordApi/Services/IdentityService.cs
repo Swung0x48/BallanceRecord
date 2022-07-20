@@ -69,8 +69,7 @@ namespace BallanceRecordApi.Services
                 };
             }
 
-            // await _userManager.AddToRoleAsync(newUser, "Admin");
-            await _userManager.AddToRoleAsync(newUser, "User");
+            // await _userManager.AddToRoleAsync(newUser, "Admin);
 
             return new AuthenticationResult
             {
@@ -208,6 +207,7 @@ namespace BallanceRecordApi.Services
                 };
             }
 
+            await _userManager.AddToRoleAsync(user, "User");
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 

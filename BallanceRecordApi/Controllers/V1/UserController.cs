@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -9,6 +10,8 @@ using BallanceRecordApi.Extensions;
 using BallanceRecordApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BallanceRecordApi.Controllers.V1
@@ -19,12 +22,14 @@ namespace BallanceRecordApi.Controllers.V1
         private readonly IEmailService _emailService;
         private readonly IUriService _uriService;
         private readonly IMapper _mapper;
-        public UserController(IIdentityService identityService, IEmailService emailService, IUriService uriService, IMapper mapper)
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        public UserController(IIdentityService identityService, IEmailService emailService, IUriService uriService, IMapper mapper, IWebHostEnvironment webHostEnvironment)
         {
             _identityService = identityService;
             _emailService = emailService;
             _uriService = uriService;
             _mapper = mapper;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -63,35 +68,27 @@ namespace BallanceRecordApi.Controllers.V1
             var authResponse = await _identityService.RegisterAsync(request.Email, request.Password, request.Username);
             if (!authResponse.Success)
             {
-                return Unauthorized(new AuthFailResponse
+                return BadRequest(new AuthFailResponse
                 {
                     Errors = authResponse.Messages
                 });
             }
 
-            var locationUri = _uriService.GetUserConfirmationUri(
+            var userConfirmationUri = _uriService.GetUserConfirmationUri(
                 authResponse.Messages.ToArray()[1],
                 authResponse.Messages.ToArray()[2]
             );
-            return Unauthorized(new AuthFailResponse
-            {
-                Errors = new[]
-                {
-                    authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x)),
-                    $"{locationUri}"
-                }
-            });
 
-            /*try
+            try
             {
-                var rawHtml = await System.IO.File.ReadAllTextAsync("Static/EmailContent.html");
-                // var baseUrl = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
-                // var locationUri = $"{baseUrl}/{ApiRoutes.Identity.Confirmation}" +
-                //                   $"?userid={Uri.EscapeDataString(authResponse.Messages.ToArray()[1])}" +
-                //                   $"&token={Uri.EscapeDataString(authResponse.Messages.ToArray()[2])}";
-                var emailContent = rawHtml.Replace("{link}", locationUri.ToString());
-                await _emailService.SendAsync(request.Email, "Ballance Register Confirmation Email", emailContent);
-                return Unauthorized(new AuthFailResponse
+                var emailContentPath = Path.Combine(_webHostEnvironment.WebRootPath, "EmailContent.html");
+                var emailContent = await System.IO.File.ReadAllTextAsync(emailContentPath);
+                emailContent = emailContent.Replace("{link}", userConfirmationUri.ToString());
+                // Console.WriteLine(request.Email);
+                // Console.WriteLine(emailContent);
+                await _emailService.SendAsync(request.Email, "BallanceMMO Verification Email", emailContent);
+
+                return Accepted(new AuthFailResponse
                 {
                     Errors = new[]
                     {
@@ -103,13 +100,13 @@ namespace BallanceRecordApi.Controllers.V1
             {
                 Console.WriteLine("Email content not found.");
                 Console.WriteLine(e.Message);
-                return Unauthorized(new AuthFailResponse
+                return StatusCode(StatusCodes.Status500InternalServerError, new AuthFailResponse
                 {
                     Errors = new[]
                     {
                         authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x)),
                         "Server has encountered a bug: Email content not found. Please contact admin.",
-                        locationUri.ToString()
+                        // locationUri.ToString()
                     }
                 });
             }
@@ -117,16 +114,16 @@ namespace BallanceRecordApi.Controllers.V1
             {
                 Console.WriteLine("Server cannot connect to mail service.");
                 Console.WriteLine(ex.Message);
-                return Unauthorized(new AuthFailResponse
+                return StatusCode(StatusCodes.Status500InternalServerError, new AuthFailResponse
                 {
                     Errors = new[]
                     {
                         authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x)),
-                        "Server has encountered a bug: Server cannot connect to mail service.. Please contact admin.",
-                        locationUri.ToString()
+                        "Server has encountered a bug: Server cannot connect to mail service. Please contact admin.",
+                        // locationUri.ToString()
                     }
                 });
-            }*/
+            }
         }
         
         [HttpPost(ApiRoutes.Identity.Login)]
