@@ -13,7 +13,7 @@ namespace BallanceRecordApi.Services
         Task<IdentityUser> GetUserById(Guid userId);
         Task<AuthenticationResult> RefreshTokenAsync(string refreshToken);
         Task<AuthenticationResult> ConfirmEmailAsync(string userId, string token);
-        Task<AuthenticationResult> ChangePasswordAsync(string email, string currentPassword, string newPassword);
-        Task<AuthenticationResult> ChangeEmailAsync(string email, string newEmail);
+        Task<AuthenticationResult> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
+        Task<AuthenticationResult> ChangeEmailAsync(string userId, string newEmail);
     }
 }

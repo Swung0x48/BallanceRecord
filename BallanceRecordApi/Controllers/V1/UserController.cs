@@ -187,11 +187,5 @@ namespace BallanceRecordApi.Controllers.V1
                 RefreshToken = authResponse.RefreshToken
             });
         }
-
-        [HttpPut(ApiRoutes.Identity.Email)]
-        public async Task<IActionResult> ChangeEmail()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

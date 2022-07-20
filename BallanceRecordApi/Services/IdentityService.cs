@@ -106,13 +106,13 @@ namespace BallanceRecordApi.Services
                 };
             }
             
-            if (!user.EmailConfirmed)
-            {
-                return new AuthenticationResult
-                {
-                    Messages = new []{"Email not confirmed."}
-                };
-            }
+            // if (!user.EmailConfirmed)
+            // {
+            //     return new AuthenticationResult
+            //     {
+            //         Messages = new []{"Email not confirmed."}
+            //     };
+            // }
             
             return await GenerateAuthenticationResultForUserAsync(user);
         }
@@ -211,6 +211,30 @@ namespace BallanceRecordApi.Services
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
+        public async Task<AuthenticationResult> ConfirmChangeEmailAsync(string userId, string newEmail, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null)
+                return new AuthenticationResult
+                {
+                    Messages = new[] { "User not found." }
+                };
+            var result = await _userManager.ChangeEmailAsync(user, newEmail, token);
+            if (!result.Succeeded)
+            {
+                return new AuthenticationResult
+                {
+                    Success = false,
+                    Messages = result.Errors.Select(x => x.Description)
+                };
+            }
+            
+            return new AuthenticationResult
+            {
+                Success = true
+            };
+        }
+
         public async Task<AuthenticationResult> ChangePasswordAsync(string email, string currentPassword, string newPassword)
         {
             var user = await _userManager.FindByEmailAsync(email);
@@ -227,21 +251,23 @@ namespace BallanceRecordApi.Services
             return await GenerateAuthenticationResultForUserAsync(user);
         }
 
-        public async Task<AuthenticationResult> ChangeEmailAsync(string email, string newEmail)
+        public async Task<AuthenticationResult> ChangeEmailAsync(string userId, string newEmail)
         {
-            var user = await _userManager.FindByEmailAsync(email);
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user is null)
+                return new AuthenticationResult
+                {
+                    Messages = new[] { "User not found." }
+                };
+            
             var token = await _userManager.GenerateChangeEmailTokenAsync(user, newEmail);
-
-            // var context = _httpContextAccessor.HttpContext;
-            // var baseUrl = $"{context.Request.Scheme}://{context.Request.Host.ToUriComponent()}";
-            // TODO: Link Generator
-            // var html = (await File.ReadAllTextAsync("Static/EmailContext.html", Encoding.UTF8))
-                // .Replace("{{link}}", $"{baseUrl}/{ApiRoutes.Identity.Email}?");
-            // TODO
-
-            throw new NotImplementedException();
-            //return await SendEmailAsync()
-            //return await SendEmailAsync(user.Email, user.Id, EmailType.EmailChange, newEmail);
+            return new AuthenticationResult
+            {
+                Messages = new[]
+                {
+                    token
+                }
+            };
         }
 
         public async Task<IList<string>> GetRolesAsync(IdentityUser user)
