@@ -71,17 +71,15 @@ namespace BallanceRecordApi.Services
 
             // await _userManager.AddToRoleAsync(newUser, "Admin);
 
-            return new AuthenticationResult
+            var result = await GenerateAuthenticationResultForUserAsync(newUser);
+            result.Messages = new[]
             {
-                Success = true,
-                Messages = new []
-                {
-                    "Please check your inbox in order to validate your email.", 
-                    newUser.Id, 
-                    await _userManager.GenerateEmailConfirmationTokenAsync(newUser)
-                }
+                "Please check your inbox in order to validate your email.",
+                newUser.Id,
+                await _userManager.GenerateEmailConfirmationTokenAsync(newUser)
             };
-            // return await GenerateAuthenticationResultForUserAsync(newUser);
+            result.Success = true;
+            return result;
         }
         
         public async Task<AuthenticationResult> LoginAsync(string email, string password)
@@ -309,13 +307,13 @@ namespace BallanceRecordApi.Services
 
         private async Task<AuthenticationResult> GenerateAuthenticationResultForUserAsync(IdentityUser user)
         {
-            if (!user.EmailConfirmed)
-            {
-                return new AuthenticationResult
-                {
-                    Messages = new[] {"Email has not been confirmed yet."}
-                };
-            }
+            // if (!user.EmailConfirmed)
+            // {
+            //     return new AuthenticationResult
+            //     {
+            //         Messages = new[] {"Email has not been confirmed yet."}
+            //     };
+            // }
             
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtOptions.Secret);

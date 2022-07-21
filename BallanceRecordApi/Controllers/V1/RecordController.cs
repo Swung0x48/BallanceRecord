@@ -114,7 +114,7 @@ namespace BallanceRecordApi.Controllers.V1
         }
 
         
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "User")]
         [HttpPut(ApiRoutes.Records.Update)]
         public async Task<IActionResult> Update([FromRoute] Guid recordId, [FromBody] UpdateRecordRequest request)
         {
@@ -140,7 +140,7 @@ namespace BallanceRecordApi.Controllers.V1
             return NotFound();
         }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "User")]
         [HttpDelete(ApiRoutes.Records.Delete)]
         public async Task<IActionResult> Delete([FromRoute] Guid recordId)
         {
@@ -177,7 +177,7 @@ namespace BallanceRecordApi.Controllers.V1
         //     return NotFound();
         // }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "User")]
         [HttpPost(ApiRoutes.Records.Create)]
         public async Task<IActionResult> Create([FromBody] CreateRecordRequest recordRequest)
         {
