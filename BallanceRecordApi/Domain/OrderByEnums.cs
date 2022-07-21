@@ -10,6 +10,6 @@ public class OrderByEnums
 
     public enum RoomOrderBy
     {
-        
+        Status
     }
 }
