@@ -27,7 +27,11 @@ public class RoomService: IRoomService
         }
 
         var skipSize = (paginationFilter.PageNumber - 1) * paginationFilter.PageSize;
-        return await rooms.Skip(skipSize).Take(paginationFilter.PageSize).ToListAsync();
+        return await rooms
+            .OrderBy(x => x.Status)
+            .Skip(skipSize)
+            .Take(paginationFilter.PageSize)
+            .ToListAsync();
     }
 
     public async Task<Room> GetRoomsByIdAsync(Guid roomId)
