@@ -38,7 +38,7 @@ namespace BallanceRecordApi.Controllers.V1
         {
             var user = await _identityService.GetUserById(Guid.Parse(HttpContext.GetUserId()));
             
-            return Ok(new Response<UserInfoResponse>(_mapper.Map<UserInfoResponse>(user)));
+            return Ok(_mapper.Map<UserInfoResponse>(user));
         }
         
         [HttpGet(ApiRoutes.Identity.Get)]
@@ -49,9 +49,9 @@ namespace BallanceRecordApi.Controllers.V1
                 return NotFound();
             var response = new BriefUserInfoResponse
             {
-                UserName = user.UserName
+                Username = user.UserName
             };
-            return Ok(new Response<BriefUserInfoResponse>(response));
+            return Ok(response);
         }
         
         [HttpPost(ApiRoutes.Identity.Register)]
@@ -84,13 +84,17 @@ namespace BallanceRecordApi.Controllers.V1
                 var emailContentPath = Path.Combine(_webHostEnvironment.WebRootPath, "EmailContent.html");
                 var emailContent = await System.IO.File.ReadAllTextAsync(emailContentPath);
                 emailContent = emailContent.Replace("{link}", userConfirmationUri.ToString());
+                emailContent = emailContent.Replace("{username}", request.Username);
                 // Console.WriteLine(request.Email);
                 // Console.WriteLine(emailContent);
                 await _emailService.SendAsync(request.Email, "BallanceMMO Verification Email", emailContent);
 
-                return Accepted(new AuthFailResponse
+                return Accepted(new AuthSuccessResponse
                 {
-                    Errors = new[]
+                    Username = authResponse.Username,
+                    Token = authResponse.Token,
+                    RefreshToken = authResponse.RefreshToken,
+                    Messages = new[]
                     {
                         authResponse.Messages.FirstOrDefault(x => !string.IsNullOrEmpty(x))
                     }
@@ -99,7 +103,7 @@ namespace BallanceRecordApi.Controllers.V1
             catch (IOException e)
             {
                 Console.WriteLine("Email content not found.");
-                Console.WriteLine(e.Message);
+                Console.WriteLine(e);
                 return StatusCode(StatusCodes.Status500InternalServerError, new AuthFailResponse
                 {
                     Errors = new[]
