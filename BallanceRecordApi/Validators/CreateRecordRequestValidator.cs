@@ -8,7 +8,7 @@ namespace BallanceRecordApi.Validators
     {
         public CreateRecordRequestValidator()
         {
-            RuleFor(x => x.MapHash)
+            RuleFor(x => x.LevelHash)
                 .Length(64);
             RuleFor(x => x.Duration)
                 .GreaterThanOrEqualTo(0);

@@ -34,7 +34,7 @@ namespace BallanceRecordApi.Migrations
                     b.Property<bool>("IsBouncing")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("MapHash")
+                    b.Property<string>("LevelHash")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Remark")

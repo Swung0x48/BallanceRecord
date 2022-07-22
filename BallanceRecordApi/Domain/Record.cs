@@ -12,7 +12,7 @@ namespace BallanceRecordApi.Domain
         public string Remark { get; set; }
         public string UserId { get; set; }
         public Guid? RoomId { get; set; }
-        public string MapHash { get; set; }
+        public string LevelHash { get; set; }
         public int Score { get; set; }
         public TimeSpan Duration { get; set; }
         public DateTime TimeCreated { get; set; }
