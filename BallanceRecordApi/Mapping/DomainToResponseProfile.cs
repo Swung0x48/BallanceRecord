@@ -15,7 +15,11 @@ namespace BallanceRecordApi.Mapping
                     opt => opt.MapFrom(src => src.User.UserName))
                 .ForMember(dest => dest.Duration,
                     opt => opt.MapFrom(src => src.Duration.TotalMilliseconds));
-            CreateMap<Room, RoomResponse>();
+            CreateMap<Room, RoomResponse>()
+                .ForPath(dest => dest.Host.Username,
+                    opt => opt.MapFrom(src => src.User.UserName))
+                .ForPath(dest => dest.Host.UserId,
+                    opt => opt.MapFrom(src => src.Id));
             CreateMap<IdentityUser, UserInfoResponse>();
         }
     }

@@ -19,7 +19,7 @@ public class RoomService: IRoomService
 
     public async Task<List<Room>> GetRoomsAsync(PaginationFilter<OrderByEnums.RoomOrderBy> paginationFilter = null)
     {
-        var rooms = _dataContext.Rooms;
+        var rooms = _dataContext.Rooms.Include(x => x.User);;
 
         if (paginationFilter is null)
         {
