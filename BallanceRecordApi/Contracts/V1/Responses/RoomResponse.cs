@@ -1,13 +1,9 @@
 using System;
+using BallanceRecordApi.Contracts.V1.Objects;
 using BallanceRecordApi.Domain;
 
 namespace BallanceRecordApi.Contracts.V1.Responses
 {
-    public class BriefUser
-    {
-        public string UserId { get; set; }
-        public string Username { get; set; }
-    }
     public class RoomResponse
     {
         public Guid Id { get; set; }

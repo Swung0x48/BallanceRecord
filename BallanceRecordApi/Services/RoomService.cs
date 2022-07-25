@@ -36,6 +36,7 @@ public class RoomService: IRoomService
 
     public async Task<Room> GetRoomsByIdAsync(Guid roomId)
     {
+        var levels = await _dataContext.RoomIncludesLevels.Select(x => x.RoomId).ToListAsync();
         return await _dataContext.Rooms.SingleOrDefaultAsync(x => x.Id == roomId);
     }
 

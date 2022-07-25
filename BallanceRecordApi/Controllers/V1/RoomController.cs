@@ -61,7 +61,7 @@ namespace BallanceRecordApi.Controllers.V1
             if (room is null)
                 return NotFound();
             
-            return Ok(new Response<RoomResponse>(_mapper.Map<RoomResponse>(room)));
+            return Ok(_mapper.Map<RoomResponse>(room));
         }
         
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -116,7 +116,7 @@ namespace BallanceRecordApi.Controllers.V1
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpPatch(ApiRoutes.Room.StatusTransition)]
+        [HttpPut(ApiRoutes.Room.StatusTransition)]
         public async Task<IActionResult> ChangeStatus([FromRoute] Guid roomId, [FromBody] RoomStateTransitionRequest request)
         {
             if (!await UserEligibleToUpdate(roomId))
