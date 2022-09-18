@@ -11,8 +11,7 @@ public class RoomIncludesLevel
     [Key]
     public Guid Id { get; set; }
     public Guid RoomId { get; set; }
-    // [Key, Column(Order = 1)]
-    public string LevelHash { get; set; }
+    public Guid LevelHash { get; set; }
     
     public uint Order { get; set; }
     

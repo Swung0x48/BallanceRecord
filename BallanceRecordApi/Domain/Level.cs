@@ -1,12 +1,15 @@
 #nullable enable
 using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace BallanceRecordApi.Domain;
 
+[Index(nameof(Hash), IsUnique = true)]
 public class Level
 {
     [Key]
+    public Guid Id { get; set; }
     public string Hash { get; set; }
     public string? Name { get; set; }
     public bool IsCustom { get; set; }

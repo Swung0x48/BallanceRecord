@@ -12,4 +12,10 @@ public class OrderByEnums
     {
         Status
     }
+
+    public enum LevelOrderBy
+    {
+        Name,
+        Difficulty
+    }
 }
